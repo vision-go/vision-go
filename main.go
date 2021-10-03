@@ -28,5 +28,5 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-  fmt.Printf("Pixel at {40,50}: r:%[1]v, g:%[1]v, b:%[1]v\n", image.At(40, 50))
+	fmt.Printf("Pixel at {40,50}: r:%[1]v, g:%[1]v, b:%[1]v\n", image.At(40, 50))
 }
