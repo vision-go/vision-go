@@ -24,12 +24,8 @@ func NewImage(path string) (ourImage, error) {
 		return ourImage{}, err
 	}
 	defer f.Close()
-	rawImage := make([]byte, weigh*heigh) // Read raw image
-	_, err = f.Read(rawImage)
-	if err != nil {
-		return ourImage{}, err
-	}
-	instance := ourImage{}
+
+	instance := ourImage{} // Initialize slices
 	initialize := func() [][]uint32 {
 		colorLayer := make([][]uint32, weigh)
 		for i := range colorLayer {
@@ -40,7 +36,13 @@ func NewImage(path string) (ourImage, error) {
 	instance.r = initialize()
 	instance.g = initialize()
 	instance.b = initialize()
+
 	grayImage := image.NewGray(image.Rect(0, 0, weigh, heigh))
+	rawImage := make([]byte, weigh*heigh) // Read raw image
+	_, err = f.Read(rawImage)
+	if err != nil {
+		return ourImage{}, err
+	}
 	grayImage.Pix = rawImage
 	instance.rect = grayImage.Bounds()
 	for y := 0; y < grayImage.Bounds().Dy(); y++ {
@@ -89,4 +91,16 @@ func (self ourImage) Encode(path string) error {
 	defer outfile.Close()
 	png.Encode(outfile, self)
 	return nil
+}
+
+// Functions
+// TODO Better performance. Don't make a copy if you are going to overwite it anyway
+func (self ourImage) Negative() ourImage {
+  negativeImage := self
+  for x := range self.r {
+    for y := range self.r[x] {
+      negativeImage.r[x][y] = 255 - negativeImage.r[x][y]
+    } 
+  }
+  return negativeImage
 }

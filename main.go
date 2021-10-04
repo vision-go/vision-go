@@ -10,13 +10,13 @@ import (
 	"github.com/vision-go/vision-go/pkg/ourImage"
 )
 
-// const target = "bogart.tfe"
+const target = "bogart.tfe"
 // const target = "animal.tfe"
 // const target = "BUGS.tf"
 // const target = "caras.tfe"
 // const target = "IMPLANTE.tfe"
 // const target = "MONTANIA.tfe"
-const target = "PLAYA2.tfe"
+// const target = "PLAYA2.tfe"
 
 func main() {
 	// defer profile.Start(profile.CPUProfile, profile.ProfilePath(".")).Stop()
@@ -24,6 +24,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+  image = image.Negative()
 	err = image.Encode(strings.ReplaceAll(target, ".tfe", ".png"))
 	if err != nil {
 		log.Fatal(err)
