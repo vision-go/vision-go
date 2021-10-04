@@ -10,8 +10,8 @@ import (
 	"github.com/vision-go/vision-go/pkg/ourImage"
 )
 
-const target = "bogart.tfe"
-// const target = "animal.tfe"
+// const target = "bogart.tfe"
+const target = "animal.tfe"
 // const target = "BUGS.tf"
 // const target = "caras.tfe"
 // const target = "IMPLANTE.tfe"

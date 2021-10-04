@@ -6,6 +6,7 @@ import (
 	"image/color"
 	"image/png"
 	"os"
+  "sync"
 )
 
 const weigh, heigh = 320, 200
@@ -94,13 +95,30 @@ func (self ourImage) Encode(path string) error {
 }
 
 // Functions
-// TODO Better performance. Don't make a copy if you are going to overwite it anyway
+// TODO Better performance. Don't make a copy if you are going to overwrite it anyway
 func (self ourImage) Negative() ourImage {
   negativeImage := self
-  for x := range self.r {
-    for y := range self.r[x] {
-      negativeImage.r[x][y] = 255 - negativeImage.r[x][y]
-    } 
+  negativeF := func(layer [][]uint32) {
+    for x := range layer {
+      for y := range layer[x] {
+        layer[x][y] = 255 - layer[x][y]
+      }
+    }
   }
+  var wg sync.WaitGroup
+  wg.Add(3)
+  go func() {
+    negativeF(negativeImage.r)
+    wg.Done()
+  }()
+  go func() {
+    negativeF(negativeImage.g)
+    wg.Done()
+  }()
+  go func() {
+    negativeF(negativeImage.b)
+    wg.Done()
+  }()
+  wg.Wait()
   return negativeImage
 }
