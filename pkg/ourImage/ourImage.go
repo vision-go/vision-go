@@ -6,10 +6,10 @@ import (
 	"image/color"
 	"image/png"
 	"os"
-  "sync"
+	"sync"
 )
 
-const weigh, heigh = 320, 200
+const weight, height = 320, 200
 
 type ourImage struct {
 	// Is a slice because otherwhise encoding would be too slow, this way we avoid making heavy copies
@@ -28,9 +28,9 @@ func NewImage(path string) (ourImage, error) {
 
 	instance := ourImage{} // Initialize slices
 	initialize := func() [][]uint32 {
-		colorLayer := make([][]uint32, weigh)
+		colorLayer := make([][]uint32, weight)
 		for i := range colorLayer {
-			colorLayer[i] = make([]uint32, heigh)
+			colorLayer[i] = make([]uint32, height)
 		}
 		return colorLayer
 	}
@@ -38,8 +38,8 @@ func NewImage(path string) (ourImage, error) {
 	instance.g = initialize()
 	instance.b = initialize()
 
-	grayImage := image.NewGray(image.Rect(0, 0, weigh, heigh))
-	rawImage := make([]byte, weigh*heigh) // Read raw image
+	grayImage := image.NewGray(image.Rect(0, 0, weight, height))
+	rawImage := make([]byte, weight*height) // Read raw image
 	_, err = f.Read(rawImage)
 	if err != nil {
 		return ourImage{}, err
