@@ -13,13 +13,13 @@ import (
 )
 
 type UI struct {
-  app fyne.App
-  mainWindow fyne.Window
+  App fyne.App
+  MainWindow fyne.Window
   tabs *container.AppTabs
   menu *fyne.MainMenu
 }
 
-func (ui *UI) init() {
+func (ui *UI) Init() {
   ui.tabs = container.NewAppTabs()
 
   ui.menu = fyne.NewMainMenu(
@@ -29,17 +29,17 @@ func (ui *UI) init() {
     ),
   )
 
-  ui.mainWindow.SetMainMenu(ui.menu)
-  ui.mainWindow.Resize(fyne.NewSize(500, 500))
-  ui.mainWindow.SetContent(ui.tabs)
-  ui.mainWindow.ShowAndRun()
+  ui.MainWindow.SetMainMenu(ui.menu)
+  ui.MainWindow.Resize(fyne.NewSize(500, 500))
+  ui.MainWindow.SetContent(ui.tabs)
+  ui.MainWindow.ShowAndRun()
 }
 
 func (ui *UI) openDialog() {
   fmt.Println("Open file")
   dialog := dialog.NewFileOpen(func(reader fyne.URIReadCloser, err error) {
     if err != nil {
-      dialog.ShowError(err, ui.mainWindow)
+      dialog.ShowError(err, ui.MainWindow)
     }
     if err == nil && reader == nil {
       return
@@ -47,10 +47,10 @@ func (ui *UI) openDialog() {
     // fmt.Println(reader.URI().Path()) // TODO Does this work on Windows and Mac?
     img, err := ourimage.NewImage(reader.URI().Path())
     if err != nil {
-      dialog.ShowError(err, ui.mainWindow)
+      dialog.ShowError(err, ui.MainWindow)
     }
     ui.newImage(img, reader.URI().Name())
-  }, ui.mainWindow)
+  }, ui.MainWindow)
   dialog.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpeg", "jpg"}))
   dialog.Show()
 }

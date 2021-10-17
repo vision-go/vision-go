@@ -11,7 +11,7 @@ import (
 // const target = "bogart.tfe"
 // const target = "animal.tfe"
 // const target = "BUGS.tf"
-const target = "caras.tfe"
+//const target = "caras.tfe"
 // const target = "IMPLANTE.tfe"
 // const target = "MONTANIA.tfe"
 // const target = "PLAYA2.tfe"
@@ -24,7 +24,7 @@ func main() {
   // }
   a := app.New()
   w := a.NewWindow("vision-go")
-  ui := userinterface.UI{app: a, mainWindow: w}
+  ui := userinterface.UI{App: a, MainWindow: w}
 	
-  ui.init()
+  ui.Init()
 }
