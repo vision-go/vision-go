@@ -4,6 +4,7 @@ import (
 	// "fmt"
 	"fmt"
 	"image"
+
 	// "log"
 
 	// "strings"
@@ -12,9 +13,11 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/storage"
 
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+
 	// "fyne.io/fyne/v2/widget"
 	"github.com/vision-go/vision-go/pkg/ourImage"
 )
@@ -64,15 +67,16 @@ func (ui *UI) openDialog() {
     if err != nil {
       dialog.ShowError(err, ui.mainWindow)
     }
-    ui.newImage(img)
+    ui.newImage(img, reader.URI().Name())
   }, ui.mainWindow)
+  dialog.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpeg", "jpg"}))
   dialog.Show()
 }
 
-func (ui *UI) newImage(img image.Image) {
+func (ui *UI) newImage(img image.Image, name string) {
   image := canvas.NewImageFromImage(img)
   image.FillMode = canvas.ImageFillOriginal
-  ui.tabs.Append(container.NewTabItem("New tab", image))
+  ui.tabs.Append(container.NewTabItem(name, image))
 }
 
 
