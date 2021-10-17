@@ -1,7 +1,6 @@
 package ourimage
 
 import (
-	"fmt"
 	"image"
 	_ "image/jpeg"
 	_ "image/png"
@@ -11,20 +10,19 @@ import (
 )
 
 func NewImage(path string) (draw.Image, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-  img, format, err := image.Decode(f)
+  f, err := os.Open(path)
   if err != nil {
     return nil, err
   }
-  dimg, ok := img.(draw.Image)
-  if !ok {
-    return nil, fmt.Errorf("%v, is not a valid format", format)
+  defer f.Close()
+  inputImg, _, err := image.Decode(f)
+  if err != nil {
+    return nil, err
   }
-  return dimg, nil
+  b := inputImg.Bounds()
+  img := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
+  draw.Draw(img, img.Bounds(), inputImg, b.Min, draw.Src)
+  return img, nil
 }
 
 func Negative(img draw.Image) draw.Image {
