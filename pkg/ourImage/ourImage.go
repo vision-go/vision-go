@@ -35,11 +35,14 @@ func NewImage(path string) (draw.Image, error) {
   return img, nil
 }
 
-func Negative(img draw.Image) draw.Image {
-  NewImage := img
-  for y := 0; y < img.Bounds().Dy(); y++ {
-    for x := 0; x < img.Bounds().Dx(); x++ {
-      col := img.At(x, y)
+func Negative(originalImg draw.Image) draw.Image {
+  b := originalImg.Bounds()
+  NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
+  draw.Draw(NewImage, NewImage.Bounds(), originalImg, b.Min, draw.Src)
+
+  for y := 0; y < originalImg.Bounds().Dy(); y++ {
+    for x := 0; x < originalImg.Bounds().Dx(); x++ {
+      col := originalImg.At(x, y)
       r, g, b, a := col.RGBA()
       newCol := color.RGBA{uint8(255-r), uint8(255-g), uint8(255-b), uint8(a)}
       NewImage.Set(x, y, newCol)
