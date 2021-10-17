@@ -3,6 +3,8 @@ package userinterface
 import (
 	"fmt"
 	"image"
+	"image/draw"
+	"reflect"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -26,6 +28,9 @@ func (ui *UI) Init() {
     fyne.NewMenu("File", 
       fyne.NewMenuItem("Open", ui.openDialog),
       fyne.NewMenuItem("Save", nil),
+    ),
+    fyne.NewMenu("Image", 
+      fyne.NewMenuItem("Negative", ui.negativeOp),
     ),
   )
 
@@ -56,6 +61,23 @@ func (ui *UI) openDialog() {
 }
 
 func (ui *UI) newImage(img image.Image, name string) {
-  image := canvas.NewRasterFromImage(img)
+  // image := canvas.NewRasterFromImage(img)
+  image := canvas.NewImageFromImage(img) // Zeus check this out :p
+  image.FillMode = canvas.ImageFillContain
   ui.tabs.Append(container.NewTabItem(name, image))
+  fmt.Println(reflect.TypeOf(ui.tabs.Selected()))
+}
+
+func (ui *UI) negativeOp() {
+  if ui.tabs.SelectedIndex() == -1 {
+    dialog.ShowError(fmt.Errorf("No image selected"), ui.MainWindow)
+    return
+  }
+  canvasImage, ok := ui.tabs.Selected().Content.(*canvas.Image)
+  if !ok {
+    dialog.ShowError(fmt.Errorf("The content in this tab is not an canvas.Image"), ui.MainWindow)
+    return
+  }
+  img, ok := canvasImage.Image.(draw.Image)
+  ui.newImage(ourimage.Negative(img), ui.tabs.CurrentTab().Text + "(Negative)")
 }
