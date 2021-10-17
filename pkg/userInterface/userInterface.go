@@ -56,7 +56,6 @@ func (ui *UI) openDialog() {
 }
 
 func (ui *UI) newImage(img image.Image, name string) {
-  image := canvas.NewImageFromImage(img)
-  image.FillMode = canvas.ImageFillOriginal
+  image := canvas.NewRasterFromImage(img)
   ui.tabs.Append(container.NewTabItem(name, image))
 }
