@@ -16,7 +16,17 @@ func NewImage(path string) (draw.Image, error) {
   }
   defer f.Close()
   inputImg, _, err := image.Decode(f)
-  if err != nil {
+  if err == image.ErrFormat {
+    pixels := make([]byte, 320*200) // TODO dynamic size?
+    f.Seek(0, 0)
+    _, err = f.Read(pixels)
+    if err != nil {
+      return nil, err
+    }
+    grayImg := image.NewGray(image.Rect(0, 0, 320, 200))
+    grayImg.Pix = pixels
+    inputImg = grayImg
+  } else if err != nil {
     return nil, err
   }
   b := inputImg.Bounds()

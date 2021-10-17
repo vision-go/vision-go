@@ -51,7 +51,7 @@ func (ui *UI) openDialog() {
     }
     ui.newImage(img, reader.URI().Name())
   }, ui.MainWindow)
-  dialog.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpeg", "jpg"}))
+  dialog.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpeg", ".jpg", ".tfe"}))
   dialog.Show()
 }
 
