@@ -6,9 +6,9 @@ import (
 )
 
 func main() {
-  a := app.New()
-  w := a.NewWindow("vision-go")
-  ui := userinterface.UI{App: a, MainWindow: w}
-	
-  ui.Init()
+	a := app.New()
+	w := a.NewWindow("vision-go")
+	ui := userinterface.UI{App: a, MainWindow: w}
+
+	ui.Init()
 }
