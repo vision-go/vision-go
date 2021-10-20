@@ -64,6 +64,12 @@ func (ui *UI) openDialog() {
 
 func (ui *UI) saveAsDialog() {
 	dialog := dialog.NewFileSave(func(writer fyne.URIWriteCloser, err error){
+		if err != nil {
+			dialog.ShowError(err, ui.MainWindow)
+		}
+		if err == nil && writer == nil {
+			return
+		}
 		if len(ui.tabs.Items) == 0{
 		dialog.ShowInformation("Error","You must open atleast one image", ui.MainWindow)
 		return;
@@ -78,6 +84,7 @@ func (ui *UI) saveAsDialog() {
 		outputFile.Close()
 	}, ui.MainWindow)
 	dialog.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpeg", ".jpg", ".tfe"}))
+	dialog.SetFileName(ui.tabs.Selected().Text)
 	dialog.Show()
 }
 
