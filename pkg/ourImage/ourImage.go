@@ -19,9 +19,9 @@ import (
 
 type OurImage struct {
 	widget.BaseWidget
-	canvasImage     *canvas.Image
-	format    string
-	statusBar *widget.Label
+	canvasImage *canvas.Image
+	format      string
+	statusBar   *widget.Label
 }
 
 func (self *OurImage) MouseIn(mouse *desktop.MouseEvent) {
@@ -88,7 +88,7 @@ func (originalImg *OurImage) Negative() OurImage { // TODO it makes a copy
 	for y := 0; y < originalImg.canvasImage.Image.Bounds().Dy(); y++ {
 		for x := 0; x < originalImg.canvasImage.Image.Bounds().Dx(); x++ {
 			oldColour := originalImg.canvasImage.Image.At(x, y)
-      NewImage.Set(x, y, lookUpTable.RGBA(oldColour, lookUpTable.Negative))
+			NewImage.Set(x, y, lookUpTable.RGBA(oldColour, lookUpTable.Negative))
 		}
 	}
 	newOurImage := *originalImg
@@ -104,8 +104,8 @@ func (originalImg *OurImage) Monochrome() OurImage { // TODO it makes a copy
 	for y := 0; y < originalImg.canvasImage.Image.Bounds().Dy(); y++ {
 		for x := 0; x < originalImg.canvasImage.Image.Bounds().Dx(); x++ {
 			oldColour := originalImg.canvasImage.Image.At(x, y)
-      r, g, b, _ := oldColour.RGBA()
-      NewImage.Set(x, y, color.Gray{Y: uint8(0.222 * float32(r>>8) + 0.707 * float32(g>>8) + 0.071 * float32(b>>8))})
+			r, g, b, _ := oldColour.RGBA()
+			NewImage.Set(x, y, color.Gray{Y: uint8(0.222*float32(r>>8) + 0.707*float32(g>>8) + 0.071*float32(b>>8))})
 		}
 	}
 	newOurImage := *originalImg
