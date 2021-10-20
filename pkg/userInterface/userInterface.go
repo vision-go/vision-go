@@ -16,14 +16,27 @@ import (
 type UI struct {
 	App          fyne.App
 	MainWindow   fyne.Window
-	tabs         *container.AppTabs
+	tabs         *container.DocTabs
 	label        *widget.Label
 	tabsElements []ourimage.OurImage // Backend
 	menu         *fyne.MainMenu
 }
 
 func (ui *UI) Init() {
-	ui.tabs = container.NewAppTabs()
+	ui.tabs = container.NewDocTabs()
+  ui.tabs.CloseIntercept = func(tabItem *container.TabItem) {
+    ui.tabs.Select(tabItem)
+    dialog := dialog.NewConfirm("Close", "Are you sure you want to close " + tabItem.Text + " ?", 
+      func(choice bool) {
+        if choice == false {
+          return
+        }
+        ui.removeImage(ui.tabs.SelectedIndex(), tabItem)
+      }, 
+    ui.MainWindow)
+    dialog.Show()
+  }
+
 	ui.label = widget.NewLabel("")
 
 	ui.menu = fyne.NewMainMenu(
@@ -65,6 +78,11 @@ func (ui *UI) newImage(img ourimage.OurImage, name string) {
 	ui.tabs.Append(container.NewTabItem(name, container.NewScroll(container.New(layout.NewCenterLayout(), &img))))
 	ui.tabs.SelectIndex(len(ui.tabs.Items) - 1) // Select the last one
 	ui.tabsElements = append(ui.tabsElements, img)
+}
+
+func (ui *UI) removeImage(index int, tabItem *container.TabItem) {
+  ui.tabsElements = append(ui.tabsElements[:index], ui.tabsElements[index+1:]...)
+  ui.tabs.Remove(tabItem)
 }
 
 func (ui *UI) negativeOp() {
