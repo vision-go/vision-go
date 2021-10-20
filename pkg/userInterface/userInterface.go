@@ -33,6 +33,7 @@ func (ui *UI) Init() {
 		),
 		fyne.NewMenu("Image",
 			fyne.NewMenuItem("Negative", ui.negativeOp),
+			fyne.NewMenuItem("Monochrome", ui.monochromeOp),
 		),
 	)
 
@@ -72,4 +73,12 @@ func (ui *UI) negativeOp() {
 		return
 	}
 	ui.newImage(ourimage.Negative(ui.tabsElements[ui.tabs.SelectedIndex()]), ui.tabs.Selected().Text+"(Negative)") // TODO Improve name
+}
+
+func (ui *UI) monochromeOp() {
+  if ui.tabs.SelectedIndex() == -1 {
+    dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
+    return
+  }
+	ui.newImage(ourimage.Monochrome(ui.tabsElements[ui.tabs.SelectedIndex()]), ui.tabs.Selected().Text+"(Monochrome)") // TODO Improve name
 }
