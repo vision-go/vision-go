@@ -18,7 +18,7 @@ type UI struct {
 	MainWindow   fyne.Window
 	tabs         *container.DocTabs
 	label        *widget.Label
-	tabsElements []ourimage.OurImage // Backend
+	tabsElements []*ourimage.OurImage // Backend
 	menu         *fyne.MainMenu
 }
 
@@ -77,7 +77,7 @@ func (ui *UI) openDialog() {
 func (ui *UI) newImage(img ourimage.OurImage, name string) {
 	ui.tabs.Append(container.NewTabItem(name, container.NewScroll(container.New(layout.NewCenterLayout(), &img))))
 	ui.tabs.SelectIndex(len(ui.tabs.Items) - 1) // Select the last one
-	ui.tabsElements = append(ui.tabsElements, img)
+	ui.tabsElements = append(ui.tabsElements, &img)
 }
 
 func (ui *UI) removeImage(index int, tabItem *container.TabItem) {
@@ -90,7 +90,7 @@ func (ui *UI) negativeOp() {
 		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
 		return
 	}
-	ui.newImage(ourimage.Negative(ui.tabsElements[ui.tabs.SelectedIndex()]), ui.tabs.Selected().Text+"(Negative)") // TODO Improve name
+	ui.newImage(ui.tabsElements[ui.tabs.SelectedIndex()].Negative(), ui.tabs.Selected().Text+"(Negative)") // TODO Improve name
 }
 
 func (ui *UI) monochromeOp() {
@@ -98,5 +98,5 @@ func (ui *UI) monochromeOp() {
     dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
     return
   }
-	ui.newImage(ourimage.Monochrome(ui.tabsElements[ui.tabs.SelectedIndex()]), ui.tabs.Selected().Text+"(Monochrome)") // TODO Improve name
+	ui.newImage(ui.tabsElements[ui.tabs.SelectedIndex()].Monochrome(), ui.tabs.Selected().Text+"(Monochrome)") // TODO Improve name
 }

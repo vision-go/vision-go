@@ -80,7 +80,7 @@ func NewImage(path string, statusBar *widget.Label) (OurImage, error) {
 	return img, nil
 }
 
-func Negative(originalImg OurImage) OurImage { // TODO it makes a copy
+func (originalImg *OurImage) Negative() OurImage { // TODO it makes a copy
 	b := originalImg.canvasImage.Image.Bounds()
 	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
 	draw.Draw(NewImage, NewImage.Bounds(), originalImg.canvasImage.Image, b.Min, draw.Src)
@@ -91,12 +91,12 @@ func Negative(originalImg OurImage) OurImage { // TODO it makes a copy
       NewImage.Set(x, y, lookUpTable.RGBA(oldColour, lookUpTable.Negative))
 		}
 	}
-	newOurImage := originalImg
+	newOurImage := *originalImg
 	newOurImage.canvasImage = canvas.NewImageFromImage(NewImage)
 	return newOurImage
 }
 
-func Monochrome(originalImg OurImage) OurImage { // TODO it makes a copy
+func (originalImg *OurImage) Monochrome() OurImage { // TODO it makes a copy
 	b := originalImg.canvasImage.Image.Bounds()
 	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
 	draw.Draw(NewImage, NewImage.Bounds(), originalImg.canvasImage.Image, b.Min, draw.Src)
@@ -108,7 +108,7 @@ func Monochrome(originalImg OurImage) OurImage { // TODO it makes a copy
       NewImage.Set(x, y, color.Gray{Y: uint8(0.222 * float32(r>>8) + 0.707 * float32(g>>8) + 0.071 * float32(b>>8))})
 		}
 	}
-	newOurImage := originalImg
+	newOurImage := *originalImg
 	newOurImage.canvasImage = canvas.NewImageFromImage(NewImage)
 	return newOurImage
 }
