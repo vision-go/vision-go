@@ -29,7 +29,7 @@ func (ui *UI) Init() {
 	ui.menu = fyne.NewMainMenu(
 		fyne.NewMenu("File",
 			fyne.NewMenuItem("Open", ui.openDialog),
-			fyne.NewMenuItem("Save", nil),
+			fyne.NewMenuItem("Save", ui.saveDialog),
 		),
 		fyne.NewMenu("Image",
 			fyne.NewMenuItem("Negative", ui.negativeOp),
@@ -55,6 +55,14 @@ func (ui *UI) openDialog() {
 			dialog.ShowError(err, ui.MainWindow)
 		}
 		ui.newImage(img, reader.URI().Name())
+	}, ui.MainWindow)
+	dialog.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpeg", ".jpg", ".tfe"}))
+	dialog.Show()
+}
+
+func (ui *UI) saveDialog() {
+	dialog := dialog.NewFileSave(func(writer fyne.URIWriteCloser, err error){
+		
 	}, ui.MainWindow)
 	dialog.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpeg", ".jpg", ".tfe"}))
 	dialog.Show()
