@@ -2,6 +2,8 @@ package userinterface
 
 import (
 	"fmt"
+	"image/png"
+	"os"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -29,7 +31,7 @@ func (ui *UI) Init() {
 	ui.menu = fyne.NewMainMenu(
 		fyne.NewMenu("File",
 			fyne.NewMenuItem("Open", ui.openDialog),
-			fyne.NewMenuItem("Save", ui.saveDialog),
+			fyne.NewMenuItem("Save As...", ui.saveAsDialog),
 		),
 		fyne.NewMenu("Image",
 			fyne.NewMenuItem("Negative", ui.negativeOp),
@@ -60,9 +62,20 @@ func (ui *UI) openDialog() {
 	dialog.Show()
 }
 
-func (ui *UI) saveDialog() {
+func (ui *UI) saveAsDialog() {
 	dialog := dialog.NewFileSave(func(writer fyne.URIWriteCloser, err error){
-		
+		if len(ui.tabs.Items) == 0{
+		dialog.ShowInformation("Error","You must open atleast one image", ui.MainWindow)
+		return;
+		}
+		outputFile, errFile := os.Create(writer.URI().Path())
+		if errFile != nil {
+			dialog.ShowError(errFile, ui.MainWindow)
+		}
+
+	 png.Encode(outputFile, ui.tabsElements[ui.tabs.SelectedIndex()].Image.Image)
+
+		outputFile.Close()
 	}, ui.MainWindow)
 	dialog.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpeg", ".jpg", ".tfe"}))
 	dialog.Show()
@@ -79,5 +92,5 @@ func (ui *UI) negativeOp() {
 		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
 		return
 	}
-	ui.newImage(ourimage.Negative(ui.tabsElements[ui.tabs.SelectedIndex()]), ui.tabs.Selected().Text+"(Negative)") // TODO Improve name
+	ui.newImage((ui.tabsElements[ui.tabs.SelectedIndex()]), ui.tabs.Selected().Text+"(Negative)") // TODO Improve name
 }
