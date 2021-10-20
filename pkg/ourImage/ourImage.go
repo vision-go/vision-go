@@ -2,7 +2,6 @@ package ourimage
 
 import (
 	"image"
-	"image/color"
 	"image/draw"
 	_ "image/jpeg"
 	_ "image/png"
@@ -13,18 +12,20 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/widget"
+
+	"github.com/vision-go/vision-go/pkg/look-up-table"
 )
 
 type OurImage struct {
 	widget.BaseWidget
-	Image     *canvas.Image
+	canvasImage     *canvas.Image
 	format    string
 	statusBar *widget.Label
 }
 
 func (self *OurImage) MouseIn(mouse *desktop.MouseEvent) {
 	if self.statusBar != nil {
-		r, g, b, a := self.Image.Image.At(int(mouse.Position.X), int(mouse.Position.Y)).RGBA()
+		r, g, b, a := self.canvasImage.Image.At(int(mouse.Position.X), int(mouse.Position.Y)).RGBA()
 		self.statusBar.SetText("R: " + strconv.Itoa(int(r>>8)) + " || G: " + strconv.Itoa(int(g>>8)) + " || B: " + strconv.Itoa(int(b>>8)) + " || A: " + strconv.Itoa(int(a>>8)))
 	}
 }
@@ -32,7 +33,7 @@ func (self *OurImage) MouseIn(mouse *desktop.MouseEvent) {
 // MouseMoved is a hook that is called if the mouse pointer moved over the element.
 func (self *OurImage) MouseMoved(mouse *desktop.MouseEvent) {
 	if self.statusBar != nil {
-		r, g, b, a := self.Image.Image.At(int(mouse.Position.X), int(mouse.Position.Y)).RGBA()
+		r, g, b, a := self.canvasImage.Image.At(int(mouse.Position.X), int(mouse.Position.Y)).RGBA()
 		self.statusBar.SetText("R: " + strconv.Itoa(int(r>>8)) + " || G: " + strconv.Itoa(int(g>>8)) + " || B: " + strconv.Itoa(int(b>>8)) + " || A: " + strconv.Itoa(int(a>>8)))
 	}
 }
@@ -45,7 +46,7 @@ func (self *OurImage) MouseOut() {
 }
 
 func (self *OurImage) CreateRenderer() fyne.WidgetRenderer {
-	return widget.NewSimpleRenderer(self.Image)
+	return widget.NewSimpleRenderer(self.canvasImage)
 }
 
 func NewImage(path string, statusBar *widget.Label) (OurImage, error) {
@@ -73,25 +74,23 @@ func NewImage(path string, statusBar *widget.Label) (OurImage, error) {
 	} else if err != nil {
 		return img, err
 	}
-	img.Image = canvas.NewImageFromImage(inputImg)
-	img.Image.FillMode = canvas.ImageFillOriginal
+	img.canvasImage = canvas.NewImageFromImage(inputImg)
+	img.canvasImage.FillMode = canvas.ImageFillOriginal
 	return img, nil
 }
 
 func Negative(originalImg OurImage) OurImage { // TODO it makes a copy
-	b := originalImg.Image.Image.Bounds()
+	b := originalImg.canvasImage.Image.Bounds()
 	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
-	draw.Draw(NewImage, NewImage.Bounds(), originalImg.Image.Image, b.Min, draw.Src)
+	draw.Draw(NewImage, NewImage.Bounds(), originalImg.canvasImage.Image, b.Min, draw.Src)
 
-	for y := 0; y < originalImg.Image.Image.Bounds().Dy(); y++ {
-		for x := 0; x < originalImg.Image.Image.Bounds().Dx(); x++ {
-			col := originalImg.Image.Image.At(x, y)
-			r, g, b, a := col.RGBA()
-			newCol := color.RGBA{uint8(255 - r), uint8(255 - g), uint8(255 - b), uint8(a)}
-			NewImage.Set(x, y, newCol)
+	for y := 0; y < originalImg.canvasImage.Image.Bounds().Dy(); y++ {
+		for x := 0; x < originalImg.canvasImage.Image.Bounds().Dx(); x++ {
+			oldColour := originalImg.canvasImage.Image.At(x, y)
+      NewImage.Set(x, y, lookUpTable.RGBA(oldColour, lookUpTable.Negative))
 		}
 	}
 	newOurImage := originalImg
-	newOurImage.Image = canvas.NewImageFromImage(NewImage)
+	newOurImage.canvasImage = canvas.NewImageFromImage(NewImage)
 	return newOurImage
 }
