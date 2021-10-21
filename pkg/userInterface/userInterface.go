@@ -2,15 +2,20 @@ package userinterface
 
 import (
 	"fmt"
+	"image"
 	"image/png"
 	"os"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/widget"
+	"gonum.org/v1/plot"
+	"gonum.org/v1/plot/plotter"
+	"gonum.org/v1/plot/vg"
 
 	ourimage "github.com/vision-go/vision-go/pkg/ourImage"
 )
@@ -35,10 +40,8 @@ func (ui *UI) Init() {
 		),
 		fyne.NewMenu("Image",
 			fyne.NewMenuItem("Negative", ui.negativeOp),
+			fyne.NewMenuItem("Histogram", ui.histogram),
 		),
-		fyne.NewMenu("Image",
-		fyne.NewMenuItem("Histogram", ui.histogram),
-	),
 	)
 
 	ui.MainWindow.SetMainMenu(ui.menu)
@@ -66,23 +69,23 @@ func (ui *UI) openDialog() {
 }
 
 func (ui *UI) saveAsDialog() {
-	dialog := dialog.NewFileSave(func(writer fyne.URIWriteCloser, err error){
+	dialog := dialog.NewFileSave(func(writer fyne.URIWriteCloser, err error) {
 		if err != nil {
 			dialog.ShowError(err, ui.MainWindow)
 		}
 		if err == nil && writer == nil {
 			return
 		}
-		if len(ui.tabs.Items) == 0{
-		dialog.ShowInformation("Error","You must open atleast one image", ui.MainWindow)
-		return;
+		if len(ui.tabs.Items) == 0 {
+			dialog.ShowInformation("Error", "You must open atleast one image", ui.MainWindow)
+			return
 		}
 		outputFile, errFile := os.Create(writer.URI().Path())
 		if errFile != nil {
 			dialog.ShowError(errFile, ui.MainWindow)
 		}
 
-	 png.Encode(outputFile, ui.tabsElements[ui.tabs.SelectedIndex()].Image.Image)
+		png.Encode(outputFile, ui.tabsElements[ui.tabs.SelectedIndex()].Image.Image)
 
 		outputFile.Close()
 	}, ui.MainWindow)
@@ -102,13 +105,27 @@ func (ui *UI) negativeOp() {
 		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
 		return
 	}
-	ui.newImage((ui.tabsElements[ui.tabs.SelectedIndex()]), ui.tabs.Selected().Text+"(Negative)") // TODO Improve name
+	ui.newImage(ourimage.Negative((ui.tabsElements[ui.tabs.SelectedIndex()])), ui.tabs.Selected().Text+"(Negative)") // TODO Improve name
 }
 
-func(ui *UI) histogram(){
-	a := ui.App.NewWindow(ui.tabs.Selected().Text+"(Histogram)")
+func (ui *UI) histogram() {
+	if ui.tabs.SelectedIndex() == -1 {
+		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
+		return
+	}
+	a := ui.App.NewWindow(ui.tabs.Selected().Text + "(Histogram)")
 	a.Resize(fyne.NewSize(500, 500))
 	a.Show()
 	fmt.Printf("%v", ui.tabsElements[ui.tabs.SelectedIndex()].Histogram)
-	
+	plot := plot.New()
+	hist, _ := plotter.NewHistogram(ui.tabsElements[ui.tabs.SelectedIndex()].Histogram, 300)
+	hist.Color.RGBA()
+	plot.Add(hist)
+	plot.Title.Text = ui.tabs.Selected().Text + "(Histogram)"
+	if err := plot.Save(10*vg.Inch, 10*vg.Inch, "tmp/hist.png"); err != nil {
+		panic(err)
+	}
+	f, _ := os.Open("tmp/hist.png")
+	img, _, _ := image.Decode(f)
+	a.SetContent(canvas.NewImageFromImage(img))
 }

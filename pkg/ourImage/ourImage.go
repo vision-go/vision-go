@@ -19,13 +19,13 @@ import (
 
 type OurImage struct {
 	widget.BaseWidget
-	Image     *canvas.Image
-	format    string
-	statusBar *widget.Label
+	Image      *canvas.Image
+	format     string
+	statusBar  *widget.Label
 	HistogramR histogram.Histogram
 	HistogramG histogram.Histogram
 	HistogramB histogram.Histogram
-	Histogram histogram.Histogram
+	Histogram  histogram.Histogram
 }
 
 func (self *OurImage) MouseIn(mouse *desktop.MouseEvent) {
@@ -102,19 +102,22 @@ func Negative(originalImg OurImage) OurImage { // TODO it makes a copy
 	}
 	newOurImage := originalImg
 	newOurImage.Image = canvas.NewImageFromImage(NewImage)
+	makeHistogram(&newOurImage)
 	return newOurImage
 }
 
-func makeHistogram(image *OurImage){
+func makeHistogram(image *OurImage) {
 	for i := 0; i < image.Image.Image.Bounds().Dx(); i++ {
 		for j := 0; j < image.Image.Image.Bounds().Dy(); j++ {
-			r,g,b,_ := image.Image.Image.At(i,j).RGBA()
-			r, g, b = r >> 8, g >> 8, b >> 8
-			image.HistogramR.At(r) = image.HistogramR.At(r) + 1
-			image.HistogramG.At(g) = 	image.HistogramG.At(g) + 1
-			image.HistogramG.At(b) = 	image.HistogramG.At(b) + 1 
-			grey := 0.222 * float64(r) + 0.707 * float64(g) + 0.071 * float64(b)
-			image.Histogram.at(int32(math.Round(grey))) = image.Histogram.at(int32(math.Round(grey))) + 1
+			r, g, b, a := image.Image.Image.At(i, j).RGBA()
+			if a != 0 {
+				r, g, b = r>>8, g>>8, b>>8
+				image.HistogramR.Values[r] = image.HistogramR.At(int(r)) + 1
+				image.HistogramG.Values[g] = image.HistogramG.At(int(r)) + 1
+				image.HistogramG.Values[b] = image.HistogramG.At(int(r)) + 1
+				grey := 0.222*float64(r) + 0.707*float64(g) + 0.071*float64(b)
+				image.Histogram.Values[int(math.Round(grey))] = image.Histogram.At(int(math.Round(grey))) + 1
+			}
 		}
 	}
 
