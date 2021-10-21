@@ -24,6 +24,7 @@ type UI struct {
 
 func (ui *UI) Init() {
 	ui.tabs = container.NewDocTabs()
+  ui.tabs.Hide()
 	ui.tabs.CloseIntercept = func(tabItem *container.TabItem) {
 		ui.tabs.Select(tabItem)
 		dialog := dialog.NewConfirm("Close", "Are you sure you want to close "+tabItem.Text+" ?",
@@ -78,11 +79,17 @@ func (ui *UI) newImage(img ourimage.OurImage, name string) {
 	ui.tabs.Append(container.NewTabItem(name, container.NewScroll(container.New(layout.NewCenterLayout(), &img))))
 	ui.tabs.SelectIndex(len(ui.tabs.Items) - 1) // Select the last one
 	ui.tabsElements = append(ui.tabsElements, &img)
+  if len(ui.tabsElements) != 0 {
+    ui.tabs.Show()
+  }
 }
 
 func (ui *UI) removeImage(index int, tabItem *container.TabItem) {
 	ui.tabsElements = append(ui.tabsElements[:index], ui.tabsElements[index+1:]...)
 	ui.tabs.Remove(tabItem)
+  if len(ui.tabsElements) == 0 {
+    ui.tabs.Hide()
+  }
 }
 
 func (ui *UI) negativeOp() {
