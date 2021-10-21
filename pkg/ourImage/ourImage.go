@@ -81,11 +81,11 @@ func NewImage(path string, statusBar *widget.Label) (OurImage, error) {
 }
 
 func (img OurImage) Format() string {
-  return img.format
+	return img.format
 }
 
 func (img OurImage) Dimensions() image.Point {
-  return img.canvasImage.Image.Bounds().Size()
+	return img.canvasImage.Image.Bounds().Size()
 }
 
 func (originalImg *OurImage) Negative() OurImage { // TODO it makes a copy

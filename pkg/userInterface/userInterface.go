@@ -9,7 +9,7 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/widget"
-  humanize "github.com/dustin/go-humanize"
+	humanize "github.com/dustin/go-humanize"
 
 	"github.com/vision-go/vision-go/pkg/ourImage"
 )
@@ -25,7 +25,7 @@ type UI struct {
 
 func (ui *UI) Init() {
 	ui.tabs = container.NewDocTabs()
-  ui.tabs.Hide()
+	ui.tabs.Hide()
 	ui.tabs.CloseIntercept = func(tabItem *container.TabItem) {
 		ui.tabs.Select(tabItem)
 		dialog := dialog.NewConfirm("Close", "Are you sure you want to close "+tabItem.Text+" ?",
@@ -50,9 +50,9 @@ func (ui *UI) Init() {
 			fyne.NewMenuItem("Negative", ui.negativeOp),
 			fyne.NewMenuItem("Monochrome", ui.monochromeOp),
 		),
-    fyne.NewMenu("View",
-      fyne.NewMenuItem("Info", ui.infoView),
-    ),
+		fyne.NewMenu("View",
+			fyne.NewMenuItem("Info", ui.infoView),
+		),
 	)
 
 	ui.MainWindow.SetMainMenu(ui.menu)
@@ -83,17 +83,17 @@ func (ui *UI) newImage(img ourimage.OurImage, name string) {
 	ui.tabs.Append(container.NewTabItem(name, container.NewScroll(container.New(layout.NewCenterLayout(), &img))))
 	ui.tabs.SelectIndex(len(ui.tabs.Items) - 1) // Select the last one
 	ui.tabsElements = append(ui.tabsElements, &img)
-  if len(ui.tabsElements) != 0 {
-    ui.tabs.Show()
-  }
+	if len(ui.tabsElements) != 0 {
+		ui.tabs.Show()
+	}
 }
 
 func (ui *UI) removeImage(index int, tabItem *container.TabItem) {
 	ui.tabsElements = append(ui.tabsElements[:index], ui.tabsElements[index+1:]...)
 	ui.tabs.Remove(tabItem)
-  if len(ui.tabsElements) == 0 {
-    ui.tabs.Hide()
-  }
+	if len(ui.tabsElements) == 0 {
+		ui.tabs.Hide()
+	}
 }
 
 func (ui *UI) negativeOp() {
@@ -117,9 +117,9 @@ func (ui *UI) infoView() {
 		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
 		return
 	}
-  format := ui.tabsElements[ui.tabs.SelectedIndex()].Format()
-  size := ui.tabsElements[ui.tabs.SelectedIndex()].Dimensions()
-  message := fmt.Sprintf("Format: %v\n Size: %v bytes (%v x %v)", format, humanize.Bytes(uint64(size.X*size.Y)), size.X, size.Y)
-  dialog := dialog.NewInformation("Information", message, ui.MainWindow)
-  dialog.Show()
+	format := ui.tabsElements[ui.tabs.SelectedIndex()].Format()
+	size := ui.tabsElements[ui.tabs.SelectedIndex()].Dimensions()
+	message := fmt.Sprintf("Format: %v\n Size: %v bytes (%v x %v)", format, humanize.Bytes(uint64(size.X*size.Y)), size.X, size.Y)
+	dialog := dialog.NewInformation("Information", message, ui.MainWindow)
+	dialog.Show()
 }
