@@ -36,6 +36,9 @@ func (ui *UI) Init() {
 		fyne.NewMenu("Image",
 			fyne.NewMenuItem("Negative", ui.negativeOp),
 		),
+		fyne.NewMenu("Image",
+		fyne.NewMenuItem("Histogram", ui.histogram),
+	),
 	)
 
 	ui.MainWindow.SetMainMenu(ui.menu)
@@ -100,4 +103,12 @@ func (ui *UI) negativeOp() {
 		return
 	}
 	ui.newImage((ui.tabsElements[ui.tabs.SelectedIndex()]), ui.tabs.Selected().Text+"(Negative)") // TODO Improve name
+}
+
+func(ui *UI) histogram(){
+	a := ui.App.NewWindow(ui.tabs.Selected().Text+"(Histogram)")
+	a.Resize(fyne.NewSize(500, 500))
+	a.Show()
+	fmt.Printf("%v", ui.tabsElements[ui.tabs.SelectedIndex()].Histogram)
+	
 }

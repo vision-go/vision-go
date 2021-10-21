@@ -6,6 +6,7 @@ import (
 	"image/draw"
 	_ "image/jpeg"
 	_ "image/png"
+	"math"
 	"os"
 	"strconv"
 
@@ -20,6 +21,10 @@ type OurImage struct {
 	Image     *canvas.Image
 	format    string
 	statusBar *widget.Label
+	HistogramR [256]int
+	HistogramG [256]int
+	HistogramB [256]int
+	Histogram [256]int
 }
 
 func (self *OurImage) MouseIn(mouse *desktop.MouseEvent) {
@@ -75,6 +80,9 @@ func NewImage(path string, statusBar *widget.Label) (OurImage, error) {
 	}
 	img.Image = canvas.NewImageFromImage(inputImg)
 	img.Image.FillMode = canvas.ImageFillOriginal
+
+	makeHistogram(&img)
+
 	return img, nil
 }
 
@@ -94,4 +102,19 @@ func Negative(originalImg OurImage) OurImage { // TODO it makes a copy
 	newOurImage := originalImg
 	newOurImage.Image = canvas.NewImageFromImage(NewImage)
 	return newOurImage
+}
+
+func makeHistogram(image *OurImage){
+	for i := 0; i < image.Image.Image.Bounds().Dx(); i++ {
+		for j := 0; j < image.Image.Image.Bounds().Dy(); j++ {
+			r,g,b,_ := image.Image.Image.At(i,j).RGBA()
+			r, g, b = r >> 8, g >> 8, b >> 8
+			image.HistogramR[r] = image.HistogramR[r] + 1
+			image.HistogramG[g] = image.HistogramG[g] + 1
+			image.HistogramB[b] = image.HistogramB[b] + 1 
+			grey := 0.222 * float64(r) + 0.707 * float64(g) + 0.071 * float64(b)
+			image.Histogram[int32(math.Round(grey))] = image.Histogram[int32(math.Round(grey))] + 1
+		}
+	}
+
 }
