@@ -14,6 +14,7 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/widget"
+	histogram "github.com/vision-go/vision-go/pkg/histogram"
 )
 
 type OurImage struct {
@@ -21,10 +22,10 @@ type OurImage struct {
 	Image     *canvas.Image
 	format    string
 	statusBar *widget.Label
-	HistogramR [256]int
-	HistogramG [256]int
-	HistogramB [256]int
-	Histogram [256]int
+	HistogramR histogram.Histogram
+	HistogramG histogram.Histogram
+	HistogramB histogram.Histogram
+	Histogram histogram.Histogram
 }
 
 func (self *OurImage) MouseIn(mouse *desktop.MouseEvent) {
@@ -109,11 +110,11 @@ func makeHistogram(image *OurImage){
 		for j := 0; j < image.Image.Image.Bounds().Dy(); j++ {
 			r,g,b,_ := image.Image.Image.At(i,j).RGBA()
 			r, g, b = r >> 8, g >> 8, b >> 8
-			image.HistogramR[r] = image.HistogramR[r] + 1
-			image.HistogramG[g] = image.HistogramG[g] + 1
-			image.HistogramB[b] = image.HistogramB[b] + 1 
+			image.HistogramR.At(r) = image.HistogramR.At(r) + 1
+			image.HistogramG.At(g) = 	image.HistogramG.At(g) + 1
+			image.HistogramG.At(b) = 	image.HistogramG.At(b) + 1 
 			grey := 0.222 * float64(r) + 0.707 * float64(g) + 0.071 * float64(b)
-			image.Histogram[int32(math.Round(grey))] = image.Histogram[int32(math.Round(grey))] + 1
+			image.Histogram.at(int32(math.Round(grey))) = image.Histogram.at(int32(math.Round(grey))) + 1
 		}
 	}
 
