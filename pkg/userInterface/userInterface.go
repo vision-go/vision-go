@@ -9,8 +9,9 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/widget"
+  humanize "github.com/dustin/go-humanize"
 
-	ourimage "github.com/vision-go/vision-go/pkg/ourImage"
+	"github.com/vision-go/vision-go/pkg/ourImage"
 )
 
 type UI struct {
@@ -49,6 +50,9 @@ func (ui *UI) Init() {
 			fyne.NewMenuItem("Negative", ui.negativeOp),
 			fyne.NewMenuItem("Monochrome", ui.monochromeOp),
 		),
+    fyne.NewMenu("View",
+      fyne.NewMenuItem("Info", ui.infoView),
+    ),
 	)
 
 	ui.MainWindow.SetMainMenu(ui.menu)
@@ -62,7 +66,7 @@ func (ui *UI) openDialog() {
 		if err != nil {
 			dialog.ShowError(err, ui.MainWindow)
 		}
-		if err == nil && reader == nil {
+		if reader == nil {
 			return
 		}
 		img, err := ourimage.NewImage(reader.URI().Path(), ui.label)
@@ -106,4 +110,16 @@ func (ui *UI) monochromeOp() {
 		return
 	}
 	ui.newImage(ui.tabsElements[ui.tabs.SelectedIndex()].Monochrome(), ui.tabs.Selected().Text+"(Monochrome)") // TODO Improve name
+}
+
+func (ui *UI) infoView() {
+	if ui.tabs.SelectedIndex() == -1 {
+		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
+		return
+	}
+  format := ui.tabsElements[ui.tabs.SelectedIndex()].Format()
+  size := ui.tabsElements[ui.tabs.SelectedIndex()].Dimensions()
+  message := fmt.Sprintf("Format: %v\n Size: %v bytes (%v x %v)", format, humanize.Bytes(uint64(size.X*size.Y)), size.X, size.Y)
+  dialog := dialog.NewInformation("Information", message, ui.MainWindow)
+  dialog.Show()
 }

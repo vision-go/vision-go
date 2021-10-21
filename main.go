@@ -2,7 +2,7 @@ package main
 
 import (
 	"fyne.io/fyne/v2/app"
-	userinterface "github.com/vision-go/vision-go/pkg/userInterface"
+	"github.com/vision-go/vision-go/pkg/userInterface"
 )
 
 func main() {

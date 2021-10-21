@@ -80,6 +80,14 @@ func NewImage(path string, statusBar *widget.Label) (OurImage, error) {
 	return img, nil
 }
 
+func (img OurImage) Format() string {
+  return img.format
+}
+
+func (img OurImage) Dimensions() image.Point {
+  return img.canvasImage.Image.Bounds().Size()
+}
+
 func (originalImg *OurImage) Negative() OurImage { // TODO it makes a copy
 	b := originalImg.canvasImage.Image.Bounds()
 	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
