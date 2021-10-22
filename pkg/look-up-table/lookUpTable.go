@@ -20,10 +20,7 @@ func init() {
 
 func RGBA(oldColour color.Color, op int) color.Color {
 	r, g, b, a := oldColour.RGBA()
-	r >>= 8
-	g >>= 8
-	b >>= 8
-	a >>= 8
+	r, g, b = r>>8, g>>8, b>>8
 	switch op {
 	case Negative:
 		return color.RGBA{NegativeTable[r].Y, NegativeTable[g].Y, NegativeTable[b].Y, uint8(a)}

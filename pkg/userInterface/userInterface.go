@@ -65,6 +65,7 @@ func (ui *UI) openDialog() {
 	dialog := dialog.NewFileOpen(func(reader fyne.URIReadCloser, err error) {
 		if err != nil {
 			dialog.ShowError(err, ui.MainWindow)
+			return
 		}
 		if reader == nil {
 			return
