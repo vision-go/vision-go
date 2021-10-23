@@ -1,6 +1,7 @@
 package ourimage
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"image/draw"
@@ -22,6 +23,8 @@ type OurImage struct {
 	canvasImage *canvas.Image
 	format      string
 	statusBar   *widget.Label
+  isDrawing bool
+  rectangle *canvas.Rectangle
 }
 
 func (self *OurImage) MouseIn(mouse *desktop.MouseEvent) {
@@ -46,13 +49,37 @@ func (self *OurImage) MouseOut() {
 	}
 }
 
+// desktop.Mouseable
+func (ourimage *OurImage) MouseDown(mouseEvent *desktop.MouseEvent) {
+  ourimage.isDrawing = true
+  ourimage.rectangle.Move(mouseEvent.Position)
+  fmt.Println("He cliqueado en: ", mouseEvent.PointEvent.Position)
+}
+
+func (ourimage *OurImage) MouseUp(mouseEvent *desktop.MouseEvent) {
+  ourimage.isDrawing = false
+  ourimage.rectangle.Resize(fyne.NewSize(mouseEvent.Position.Y-ourimage.Size().Width, mouseEvent.Position.X-ourimage.Size().Height))
+  ourimage.rectangle.Show()
+  fmt.Println("He dejado de cliquear en: ", mouseEvent.PointEvent.Position)
+}
+
+// func (ourImage *OurImage) Dragged(dragEvent *fyne.DragEvent) {
+// 
+//   fmt.Println("Me he movido: ", dragEvent.Dragged.DX, dragEvent.Dragged.DY)
+// }
+// func (OurImage *OurImage) DragEnd() {
+// 
+//   fmt.Println("He dejado de cliquear en: ")
+// }
+
 func (self *OurImage) CreateRenderer() fyne.WidgetRenderer {
 	return widget.NewSimpleRenderer(self.canvasImage)
 }
 
-func NewImage(path string, statusBar *widget.Label) (OurImage, error) {
+func NewImage(path string, statusBar *widget.Label, rect *canvas.Rectangle) (OurImage, error) {
 	var img OurImage
 	img.statusBar = statusBar
+  img.rectangle = rect
 	img.ExtendBaseWidget(&img)
 	f, err := os.Open(path)
 	if err != nil {
@@ -80,6 +107,12 @@ func NewImage(path string, statusBar *widget.Label) (OurImage, error) {
 	return img, nil
 }
 
+func newOurImageFromImage(ourImage *OurImage, newImage image.Image) OurImage {
+  ourNewImage := *ourImage
+  ourNewImage.canvasImage = canvas.NewImageFromImage(newImage)
+  return ourNewImage
+}
+
 func (img OurImage) Format() string {
 	return img.format
 }
@@ -88,6 +121,7 @@ func (img OurImage) Dimensions() image.Point {
 	return img.canvasImage.Image.Bounds().Size()
 }
 
+// Functions
 func (originalImg *OurImage) Negative() OurImage { // TODO it makes a copy
 	b := originalImg.canvasImage.Image.Bounds()
 	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
@@ -99,9 +133,7 @@ func (originalImg *OurImage) Negative() OurImage { // TODO it makes a copy
 			NewImage.Set(x, y, lookUpTable.RGBA(oldColour, lookUpTable.Negative))
 		}
 	}
-	newOurImage := *originalImg
-	newOurImage.canvasImage = canvas.NewImageFromImage(NewImage)
-	return newOurImage
+  return newOurImageFromImage(originalImg, NewImage)
 }
 
 func (originalImg *OurImage) Monochrome() OurImage { // TODO it makes a copy
@@ -116,7 +148,5 @@ func (originalImg *OurImage) Monochrome() OurImage { // TODO it makes a copy
 			NewImage.Set(x, y, color.Gray{Y: uint8(0.222*float32(r>>8) + 0.707*float32(g>>8) + 0.071*float32(b>>8))})
 		}
 	}
-	newOurImage := *originalImg
-	newOurImage.canvasImage = canvas.NewImageFromImage(NewImage)
-	return newOurImage
+  return newOurImageFromImage(originalImg, NewImage)
 }

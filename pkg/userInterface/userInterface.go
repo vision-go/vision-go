@@ -2,8 +2,10 @@ package userinterface
 
 import (
 	"fmt"
+	"image/color"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
@@ -19,6 +21,7 @@ type UI struct {
 	MainWindow   fyne.Window
 	tabs         *container.DocTabs
 	label        *widget.Label
+  rect *canvas.Rectangle
 	tabsElements []*ourimage.OurImage // Backend
 	menu         *fyne.MainMenu
 }
@@ -26,6 +29,8 @@ type UI struct {
 func (ui *UI) Init() {
 	ui.tabs = container.NewDocTabs()
 	ui.tabs.Hide()
+  ui.rect = canvas.NewRectangle(color.White)
+  // ui.rect.FillColor = color.White
 	ui.tabs.CloseIntercept = func(tabItem *container.TabItem) {
 		ui.tabs.Select(tabItem)
 		dialog := dialog.NewConfirm("Close", "Are you sure you want to close "+tabItem.Text+" ?",
@@ -70,7 +75,7 @@ func (ui *UI) openDialog() {
 		if reader == nil {
 			return
 		}
-		img, err := ourimage.NewImage(reader.URI().Path(), ui.label)
+    img, err := ourimage.NewImage(reader.URI().Path(), ui.label, ui.rect)
 		if err != nil {
 			dialog.ShowError(err, ui.MainWindow)
 		}
@@ -81,7 +86,7 @@ func (ui *UI) openDialog() {
 }
 
 func (ui *UI) newImage(img ourimage.OurImage, name string) {
-	ui.tabs.Append(container.NewTabItem(name, container.NewScroll(container.New(layout.NewCenterLayout(), &img))))
+  ui.tabs.Append(container.NewTabItem(name, container.NewScroll(container.New(layout.NewCenterLayout(), ui.rect, &img))))
 	ui.tabs.SelectIndex(len(ui.tabs.Items) - 1) // Select the last one
 	ui.tabsElements = append(ui.tabsElements, &img)
 	if len(ui.tabsElements) != 0 {
