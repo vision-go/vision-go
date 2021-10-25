@@ -69,24 +69,16 @@ func (ourimage *OurImage) MouseOut() {
 
 // // desktop.Mouseable
 func (ourimage *OurImage) MouseDown(mouseEvent *desktop.MouseEvent) {
-  // ourimage.rectangle.Resize(fyne.NewSize(0, 0))
-  // ourimage.rectangle.Move(mouseEvent.AbsolutePosition.Subtract(fyne.NewPos(5, 74)))
   ourimage.rectangle.Min = image.Pt(int(mouseEvent.Position.X), int(mouseEvent.Position.Y))
+  fmt.Println(ourimage.rectangle.Min)
 }
 
 func (ourimage *OurImage) MouseUp(mouseEvent *desktop.MouseEvent) {
   ourimage.rectangle.Max = image.Pt(int(mouseEvent.Position.X), int(mouseEvent.Position.Y))
   newImage := ourimage.canvasImage.Image
-  fmt.Println("Size before crop: ", newImage.Bounds())
   cropped := newImage.(SubImager).SubImage(ourimage.rectangle)
-  fmt.Println("Size after crop: ", cropped.Bounds())
   ourimage.ROIcallback(newOurImageFromImage(*ourimage, cropped))
 }
-
-// func (ourimage *OurImage) Tapped(mouseEvent *fyne.PointEvent) {
-//   ourimage.rectangle.Resize(fyne.NewSize(0, 0))
-//   ourimage.rectangle.Refresh()
-// }
 
 func (self *OurImage) CreateRenderer() fyne.WidgetRenderer {
 	return widget.NewSimpleRenderer(self.canvasImage)
@@ -125,12 +117,8 @@ func NewImage(path string, statusBar *widget.Label, w fyne.Window, ROIcallback f
 }
 
 func newOurImageFromImage(ourImage OurImage, newImage image.Image) OurImage {
-  newSize := fyne.NewSize(float32(newImage.Bounds().Dx()), float32(newImage.Bounds().Dy()))
-  fmt.Println("It should have: ", newSize)
   ourImage.canvasImage = canvas.NewImageFromImage(newImage)
-  ourImage.canvasImage.Resize(newSize)
   ourImage.canvasImage.FillMode = canvas.ImageFillOriginal
-  fmt.Println("It has: ", ourImage.canvasImage.Size())
   return ourImage
 }
 
@@ -146,7 +134,6 @@ func (img OurImage) Dimensions() image.Point {
 func (originalImg *OurImage) Negative() OurImage { // TODO it makes a copy
 	b := originalImg.canvasImage.Image.Bounds()
 	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
-	draw.Draw(NewImage, NewImage.Bounds(), originalImg.canvasImage.Image, b.Min, draw.Src)
 
 	for y := 0; y < originalImg.canvasImage.Image.Bounds().Dy(); y++ {
 		for x := 0; x < originalImg.canvasImage.Image.Bounds().Dx(); x++ {
@@ -160,7 +147,6 @@ func (originalImg *OurImage) Negative() OurImage { // TODO it makes a copy
 func (originalImg *OurImage) Monochrome() OurImage { // TODO it makes a copy
 	b := originalImg.canvasImage.Image.Bounds()
 	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
-	draw.Draw(NewImage, NewImage.Bounds(), originalImg.canvasImage.Image, b.Min, draw.Src)
 
 	for y := 0; y < originalImg.canvasImage.Image.Bounds().Dy(); y++ {
 		for x := 0; x < originalImg.canvasImage.Image.Bounds().Dx(); x++ {
