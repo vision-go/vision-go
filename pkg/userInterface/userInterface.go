@@ -49,6 +49,7 @@ func (ui *UI) Init() {
 		fyne.NewMenu("Image",
 			fyne.NewMenuItem("Negative", ui.negativeOp),
 			fyne.NewMenuItem("Monochrome", ui.monochromeOp),
+      fyne.NewMenuItem("Linear Transformation", ui.linearTransformationOp),
 		),
 		fyne.NewMenu("View",
 			fyne.NewMenuItem("Info", ui.infoView),
@@ -111,6 +112,17 @@ func (ui *UI) monochromeOp() {
 		return
 	}
 	ui.newImage(ui.tabsElements[ui.tabs.SelectedIndex()].Monochrome(), ui.tabs.Selected().Text+"(Monochrome)") // TODO Improve name
+}
+
+func (ui *UI) linearTransformationOp() {
+  // if ui.tabs.SelectedIndex() == -1 {
+  //   dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
+  //   return
+  // }
+  point := container.NewGridWithColumns(2, widget.NewLabel("Point"), widget.NewEntry())
+  dialog.ShowCustomConfirm("Linear Transformation", "OK", "Cancel", point, func(bool) {
+
+  }, ui.MainWindow)
 }
 
 func (ui *UI) infoView() {
