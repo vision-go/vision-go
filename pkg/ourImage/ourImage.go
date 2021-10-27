@@ -35,9 +35,8 @@ type OurImage struct {
 	format      string
 	statusBar   *widget.Label
   mainWindow fyne.Window
-  // rectangle *canvas.Rectangle
   rectangle image.Rectangle
-  ROIcallback func(OurImage)
+  ROIcallback func(*OurImage)
 }
 
 func (self *OurImage) MouseIn(mouse *desktop.MouseEvent) {
@@ -62,34 +61,39 @@ func (ourimage *OurImage) MouseOut() {
 	if ourimage.statusBar != nil {
 		ourimage.statusBar.SetText("")
 	}
-  // ourimage.rectangle.Resize(fyne.NewSize(0, 0))
-  ourimage.rectangle.Min = image.Pt(0, 0)
-  ourimage.rectangle.Max = image.Pt(0, 0)
+  // ourimage.rectangle.Min = image.Pt(0, 0)
+  // ourimage.rectangle.Max = image.Pt(0, 0)
 }
 
-// // desktop.Mouseable
+// desktop.Mouseable
 func (ourimage *OurImage) MouseDown(mouseEvent *desktop.MouseEvent) {
   ourimage.rectangle.Min = image.Pt(int(mouseEvent.Position.X), int(mouseEvent.Position.Y))
-  fmt.Println(ourimage.rectangle.Min)
 }
+
+// func (ourimage *OurImage) Tapped(mouseEvent *fyne.PointEvent) {
+// 	b := ourimage.canvasImage.Image.Bounds()
+// 	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
+//   NewImage.Set(int(mouseEvent.Position.X), int(mouseEvent.Position.Y), color.White)
+//   ourimage.canvasImage.Image = NewImage
+//   ourimage.canvasImage.Refresh()
+//   fmt.Println("Pincho")
+// }
 
 func (ourimage *OurImage) MouseUp(mouseEvent *desktop.MouseEvent) {
   ourimage.rectangle.Max = image.Pt(int(mouseEvent.Position.X), int(mouseEvent.Position.Y))
-  newImage := ourimage.canvasImage.Image
-  cropped := newImage.(SubImager).SubImage(ourimage.rectangle)
-  ourimage.ROIcallback(newOurImageFromImage(*ourimage, cropped))
+  ourimage.ROIcallback(ourimage.ROI(ourimage.rectangle))
 }
 
 func (self *OurImage) CreateRenderer() fyne.WidgetRenderer {
 	return widget.NewSimpleRenderer(self.canvasImage)
 }
 
-func NewImage(path string, statusBar *widget.Label, w fyne.Window, ROIcallback func(OurImage)) (OurImage, error) {
-	var img OurImage
+func NewImage(path string, statusBar *widget.Label, w fyne.Window, ROIcallback func(*OurImage)) (*OurImage, error) {
+  img := &OurImage{}
 	img.statusBar = statusBar
   img.mainWindow = w
   img.ROIcallback = ROIcallback
-	img.ExtendBaseWidget(&img)
+	img.ExtendBaseWidget(img)
 	f, err := os.Open(path)
 	if err != nil {
 		return img, err
@@ -116,10 +120,16 @@ func NewImage(path string, statusBar *widget.Label, w fyne.Window, ROIcallback f
 	return img, nil
 }
 
-func newOurImageFromImage(ourImage OurImage, newImage image.Image) OurImage {
-  ourImage.canvasImage = canvas.NewImageFromImage(newImage)
-  ourImage.canvasImage.FillMode = canvas.ImageFillOriginal
-  return ourImage
+func newOurImageFromImage(ourImage *OurImage, newImage image.Image) *OurImage {
+	// var img OurImage
+  img := &OurImage{}
+	img.statusBar = ourImage.statusBar
+  img.mainWindow = ourImage.mainWindow
+  img.ROIcallback = ourImage.ROIcallback
+	img.ExtendBaseWidget(img)
+  img.canvasImage = canvas.NewImageFromImage(newImage)
+  img.canvasImage.FillMode = canvas.ImageFillOriginal
+  return img
 }
 
 func (img OurImage) Format() string {
@@ -131,7 +141,7 @@ func (img OurImage) Dimensions() image.Point {
 }
 
 // Functions
-func (originalImg *OurImage) Negative() OurImage { // TODO it makes a copy
+func (originalImg *OurImage) Negative() *OurImage { // TODO it makes a copy
 	b := originalImg.canvasImage.Image.Bounds()
 	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
 
@@ -141,10 +151,10 @@ func (originalImg *OurImage) Negative() OurImage { // TODO it makes a copy
 			NewImage.Set(x, y, lookUpTable.RGBA(oldColour, lookUpTable.Negative))
 		}
 	}
-  return newOurImageFromImage(*originalImg, NewImage)
+  return newOurImageFromImage(originalImg, NewImage)
 }
 
-func (originalImg *OurImage) Monochrome() OurImage { // TODO it makes a copy
+func (originalImg *OurImage) Monochrome() *OurImage { // TODO it makes a copy
 	b := originalImg.canvasImage.Image.Bounds()
 	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
 
@@ -152,8 +162,20 @@ func (originalImg *OurImage) Monochrome() OurImage { // TODO it makes a copy
 		for x := 0; x < originalImg.canvasImage.Image.Bounds().Dx(); x++ {
 			oldColour := originalImg.canvasImage.Image.At(x, y)
 			r, g, b, _ := oldColour.RGBA()
-			NewImage.Set(x, y, color.Gray{Y: uint8(0.222*float32(r>>8) + 0.707*float32(g>>8) + 0.071*float32(b>>8))})
+			NewImage.Set(x, y, color.Gray{Y: uint8(0.222*float32(r>>8) + 0.707*float32(g>>8) + 0.071*float32(b>>8))}) // PAL
 		}
 	}
-  return newOurImageFromImage(*originalImg, NewImage)
+  return newOurImageFromImage(originalImg, NewImage)
+}
+
+func (originalImg *OurImage) ROI(rect image.Rectangle) *OurImage {
+	b := rect.Bounds()
+	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
+  for y := rect.Min.Y; y < rect.Max.Y; y++ {
+    for x := rect.Min.X; x < rect.Max.X; x++ {
+      NewImage.Set(x, y, originalImg.canvasImage.Image.At(x, y))
+      fmt.Println(originalImg.canvasImage.Image.At(x, y))
+    }
+  }
+  return newOurImageFromImage(originalImg, NewImage)
 }

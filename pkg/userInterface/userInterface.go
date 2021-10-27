@@ -83,8 +83,8 @@ func (ui *UI) openDialog() {
 	dialog.Show()
 }
 
-func (ui *UI) ROIcallback(cropped ourimage.OurImage) {
-  dialog.ShowCustomConfirm("ROI", "Ok", "Cancel", container.NewCenter(&cropped), 
+func (ui *UI) ROIcallback(cropped *ourimage.OurImage) {
+  dialog.ShowCustomConfirm("Do you want this sub-image?", "Ok", "Cancel", container.NewCenter(cropped), 
     func(choice bool){
       if !choice {
         return
@@ -94,10 +94,10 @@ func (ui *UI) ROIcallback(cropped ourimage.OurImage) {
     ui.MainWindow)
 }
 
-func (ui *UI) newImage(img ourimage.OurImage, name string) {
-  ui.tabs.Append(container.NewTabItem(name, container.NewScroll(container.New(layout.NewCenterLayout(), &img))))
+func (ui *UI) newImage(img *ourimage.OurImage, name string) {
+  ui.tabs.Append(container.NewTabItem(name, container.NewScroll(container.New(layout.NewCenterLayout(), img))))
 	ui.tabs.SelectIndex(len(ui.tabs.Items) - 1) // Select the last one
-	ui.tabsElements = append(ui.tabsElements, &img)
+	ui.tabsElements = append(ui.tabsElements, img)
 	if len(ui.tabsElements) != 0 {
 		ui.tabs.Show()
 	}
