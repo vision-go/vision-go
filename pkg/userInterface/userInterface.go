@@ -2,6 +2,7 @@ package userinterface
 
 import (
 	"fmt"
+	"image"
 	"image/png"
 	"log"
 	"os"
@@ -16,6 +17,7 @@ import (
 	"github.com/wcharczuk/go-chart/v2"
 	"github.com/wcharczuk/go-chart/v2/drawing"
 
+	"github.com/vision-go/vision-go/pkg/histogram"
 	ourimage "github.com/vision-go/vision-go/pkg/ourImage"
 )
 
@@ -41,6 +43,7 @@ func (ui *UI) Init() {
 			fyne.NewMenuItem("Negative", ui.negativeOp),
 			fyne.NewMenuItem("Histogram", ui.histogram),
 			fyne.NewMenuItem("Accumulative Histogram", ui.accumulativeHistogram),
+			fyne.NewMenuItem("Normalized Histogram", ui.normalizedHistogram),
 		),
 	)
 
@@ -117,6 +120,39 @@ func (ui *UI) histogram() {
 	a.Resize(fyne.NewSize(500, 500))
 	a.Show()
 
+	image := ui.calculateHistogramGraph(&ui.tabsElements[ui.tabs.SelectedIndex()].Histogram,
+		&ui.tabsElements[ui.tabs.SelectedInd5ex()].HistogramR,
+		&ui.tabsElements[ui.tabs.SelectedIndex()].HistogramG,
+		&ui.tabsElements[ui.tabs.SelectedIndex()].HistogramB)
+
+	a.SetContent(canvas.NewImageFromImage(image))
+}
+
+func (ui *UI) accumulativeHistogram() {
+	if ui.tabs.SelectedIndex() == -1 {
+		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
+		return
+	}
+	a := ui.App.NewWindow(ui.tabs.Selected().Text + "(Histogram)")
+	a.Resize(fyne.NewSize(500, 500))
+	a.Show()
+
+	image := ui.calculateHistogramGraph(&ui.tabsElements[ui.tabs.SelectedIndex()].HistogramAccumulative,
+		&ui.tabsElements[ui.tabs.SelectedIndex()].HistogramAccumulativeR,
+		&ui.tabsElements[ui.tabs.SelectedIndex()].HistogramAccumulativeG,
+		&ui.tabsElements[ui.tabs.SelectedIndex()].HistogramAccumulativeB)
+
+	a.SetContent(canvas.NewImageFromImage(image))
+}
+
+func (ui *UI) normalizedHistogram() {
+	if ui.tabs.SelectedIndex() == -1 {
+		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
+		return
+	}
+	a := ui.App.NewWindow(ui.tabs.Selected().Text + "(AccumulativeHistogram)")
+	a.Resize(fyne.NewSize(500, 500))
+	a.Show()
 
 	var RedGraph []float64
 	var GreenGraph []float64
@@ -125,28 +161,28 @@ func (ui *UI) histogram() {
 	var GrayGraph []float64
 	var indexValues []float64
 
-	for i := 0; i < 256; i++{
+	for i := 0; i < 256; i++ {
 		indexValues = append(indexValues, float64(i))
-		GrayGraph = append(GrayGraph, float64(ui.tabsElements[ui.tabs.SelectedIndex()].Histogram.Values[i])) 
-		RedGraph = append(RedGraph, float64(ui.tabsElements[ui.tabs.SelectedIndex()].HistogramR.Values[i]))
-		GreenGraph = append(GreenGraph, float64(ui.tabsElements[ui.tabs.SelectedIndex()].HistogramG.Values[i]))
-		BlueGraph = append(BlueGraph,float64(ui.tabsElements[ui.tabs.SelectedIndex()].HistogramB.Values[i]))
+		GrayGraph = append(GrayGraph, float64(ui.tabsElements[ui.tabs.SelectedIndex()].HistogramNormalized.Values[i]))
+		RedGraph = append(RedGraph, float64(ui.tabsElements[ui.tabs.SelectedIndex()].HistogramNormalizedR.Values[i]))
+		GreenGraph = append(GreenGraph, float64(ui.tabsElements[ui.tabs.SelectedIndex()].HistogramNormalizedG.Values[i]))
+		BlueGraph = append(BlueGraph, float64(ui.tabsElements[ui.tabs.SelectedIndex()].HistogramNormalizedB.Values[i]))
 	}
 	graph := chart.Chart{
 		Series: []chart.Series{
 			chart.ContinuousSeries{
 				Style: chart.Style{
 					StrokeColor: drawing.Color{
-						R:255,
-						G:0,
-						B:0,
-						A:255,
+						R: 255,
+						G: 0,
+						B: 0,
+						A: 255,
 					},
 					FillColor: drawing.Color{
-						R:255,
-						G:0,
-						B:0,
-						A:127,
+						R: 255,
+						G: 0,
+						B: 0,
+						A: 127,
 					},
 				},
 				XValues: indexValues,
@@ -155,16 +191,16 @@ func (ui *UI) histogram() {
 			chart.ContinuousSeries{
 				Style: chart.Style{
 					StrokeColor: drawing.Color{
-						R:0,
-						G:255,
-						B:0,
-						A:255,
+						R: 0,
+						G: 255,
+						B: 0,
+						A: 255,
 					},
 					FillColor: drawing.Color{
-						R:0,
-						G:255,
-						B:0,
-						A:127,
+						R: 0,
+						G: 255,
+						B: 0,
+						A: 127,
 					},
 				},
 				XValues: indexValues,
@@ -174,16 +210,16 @@ func (ui *UI) histogram() {
 				Style: chart.Style{
 					StrokeWidth: 2.0,
 					StrokeColor: drawing.Color{
-						R:0,
-						G:0,
-						B:255,
-						A:255,
+						R: 0,
+						G: 0,
+						B: 255,
+						A: 255,
 					},
 					FillColor: drawing.Color{
-						R:0,
-						G:0,
-						B:255,
-						A:127,
+						R: 0,
+						G: 0,
+						B: 255,
+						A: 127,
 					},
 				},
 				XValues: indexValues,
@@ -192,16 +228,16 @@ func (ui *UI) histogram() {
 			chart.ContinuousSeries{
 				Style: chart.Style{
 					StrokeColor: drawing.Color{
-						R:0,
-						G:0,
-						B:0,
-						A:255,
+						R: 0,
+						G: 0,
+						B: 0,
+						A: 255,
 					},
 					FillColor: drawing.Color{
-						R:0,
-						G:0,
-						B:0,
-						A:127,
+						R: 0,
+						G: 0,
+						B: 0,
+						A: 127,
 					},
 				},
 				XValues: indexValues,
@@ -219,14 +255,7 @@ func (ui *UI) histogram() {
 	a.SetContent(canvas.NewImageFromImage(image))
 }
 
-func (ui *UI) accumulativeHistogram() {
-	if ui.tabs.SelectedIndex() == -1 {
-		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
-		return
-	}
-	a := ui.App.NewWindow(ui.tabs.Selected().Text + "(AccumulativeHistogram)")
-	a.Resize(fyne.NewSize(500, 500))
-	a.Show()
+func (ui *UI) calculateHistogramGraph(grey *histogram.Histogram, red *histogram.Histogram, green *histogram.Histogram, blue *histogram.Histogram) image.Image {
 
 	var RedGraph []float64
 	var GreenGraph []float64
@@ -235,28 +264,28 @@ func (ui *UI) accumulativeHistogram() {
 	var GrayGraph []float64
 	var indexValues []float64
 
-	for i := 0; i < 256; i++{
+	for i := 0; i < 256; i++ {
 		indexValues = append(indexValues, float64(i))
-		GrayGraph = append(GrayGraph, float64(ui.tabsElements[ui.tabs.SelectedIndex()].HistogramAccumulative.Values[i])) 
-		RedGraph = append(RedGraph, float64(ui.tabsElements[ui.tabs.SelectedIndex()].HistogramAccumulativeR.Values[i]))
-		GreenGraph = append(GreenGraph, float64(ui.tabsElements[ui.tabs.SelectedIndex()].HistogramAccumulativeG.Values[i]))
-		BlueGraph = append(BlueGraph,float64(ui.tabsElements[ui.tabs.SelectedIndex()].HistogramAccumulativeB.Values[i]))
+		GrayGraph = append(GrayGraph, float64(grey.At(i)))
+		RedGraph = append(RedGraph, float64(red.At(i)))
+		GreenGraph = append(GreenGraph, float64(green.At(i)))
+		BlueGraph = append(BlueGraph, float64(blue.At(i)))
 	}
 	graph := chart.Chart{
 		Series: []chart.Series{
 			chart.ContinuousSeries{
 				Style: chart.Style{
 					StrokeColor: drawing.Color{
-						R:255,
-						G:0,
-						B:0,
-						A:255,
+						R: 255,
+						G: 0,
+						B: 0,
+						A: 255,
 					},
 					FillColor: drawing.Color{
-						R:255,
-						G:0,
-						B:0,
-						A:127,
+						R: 255,
+						G: 0,
+						B: 0,
+						A: 127,
 					},
 				},
 				XValues: indexValues,
@@ -265,16 +294,16 @@ func (ui *UI) accumulativeHistogram() {
 			chart.ContinuousSeries{
 				Style: chart.Style{
 					StrokeColor: drawing.Color{
-						R:0,
-						G:255,
-						B:0,
-						A:255,
+						R: 0,
+						G: 255,
+						B: 0,
+						A: 255,
 					},
 					FillColor: drawing.Color{
-						R:0,
-						G:255,
-						B:0,
-						A:127,
+						R: 0,
+						G: 255,
+						B: 0,
+						A: 127,
 					},
 				},
 				XValues: indexValues,
@@ -284,16 +313,16 @@ func (ui *UI) accumulativeHistogram() {
 				Style: chart.Style{
 					StrokeWidth: 2.0,
 					StrokeColor: drawing.Color{
-						R:0,
-						G:0,
-						B:255,
-						A:255,
+						R: 0,
+						G: 0,
+						B: 255,
+						A: 255,
 					},
 					FillColor: drawing.Color{
-						R:0,
-						G:0,
-						B:255,
-						A:127,
+						R: 0,
+						G: 0,
+						B: 255,
+						A: 127,
 					},
 				},
 				XValues: indexValues,
@@ -302,16 +331,16 @@ func (ui *UI) accumulativeHistogram() {
 			chart.ContinuousSeries{
 				Style: chart.Style{
 					StrokeColor: drawing.Color{
-						R:0,
-						G:0,
-						B:0,
-						A:255,
+						R: 0,
+						G: 0,
+						B: 0,
+						A: 255,
 					},
 					FillColor: drawing.Color{
-						R:0,
-						G:0,
-						B:0,
-						A:127,
+						R: 0,
+						G: 0,
+						B: 0,
+						A: 127,
 					},
 				},
 				XValues: indexValues,
@@ -326,5 +355,5 @@ func (ui *UI) accumulativeHistogram() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	a.SetContent(canvas.NewImageFromImage(image))
+	return image
 }

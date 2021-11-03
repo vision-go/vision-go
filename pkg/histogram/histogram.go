@@ -15,3 +15,11 @@ func (hist Histogram) XY(x int) (a, b float64) {
 func (hist Histogram) Len() int {
 	return 255
 }
+
+type HistogramNormalized struct {
+	Values [256]float64
+}
+
+func (a HistogramNormalized) At(x int) float64 {
+	return (a.Values[x])
+}

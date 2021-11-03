@@ -22,6 +22,7 @@ type OurImage struct {
 	Image      *canvas.Image
 	format     string
 	statusBar  *widget.Label
+
 	HistogramR histogram.Histogram
 	HistogramG histogram.Histogram
 	HistogramB histogram.Histogram
@@ -31,6 +32,11 @@ type OurImage struct {
 	HistogramAccumulativeG histogram.Histogram
 	HistogramAccumulativeB histogram.Histogram
 	HistogramAccumulative histogram.Histogram
+
+	HistogramNormalizedR histogram.HistogramNormalized
+	HistogramNormalizedG histogram.HistogramNormalized
+	HistogramNormalizedB histogram.HistogramNormalized
+	HistogramNormalized histogram.HistogramNormalized
 }
 
 func (self *OurImage) MouseIn(mouse *desktop.MouseEvent) {
@@ -122,6 +128,11 @@ func makeHistogram(image *OurImage) {
 		image.HistogramAccumulativeG.Values[i] = 0
 		image.HistogramAccumulativeB.Values[i] = 0
 		image.HistogramAccumulative.Values[i] = 0
+
+		image.HistogramNormalized.Values[i] = 0.0
+		image.HistogramNormalizedR.Values[i] = 0.0
+		image.HistogramNormalizedG.Values[i] = 0.0
+		image.HistogramNormalizedB.Values[i] = 0.0
 	}
 	for i := 0; i < image.Image.Image.Bounds().Dx(); i++ {
 		for j := 0; j < image.Image.Image.Bounds().Dy(); j++ {
@@ -145,5 +156,11 @@ func makeHistogram(image *OurImage) {
 			image.HistogramAccumulative.Values[index] += image.Histogram.At(i)
 		}
 	}
+		for i := 0; i < 256; i++{	
+			image.HistogramNormalized.Values[i] /= float64(image.Image.Image.Bounds().Dx() * image.Image.Image.Bounds().Dy())
+			image.HistogramNormalizedR.Values[i] /= float64(image.Image.Image.Bounds().Dx() * image.Image.Image.Bounds().Dy())
+			image.HistogramNormalizedG.Values[i] /= float64(image.Image.Image.Bounds().Dx() * image.Image.Image.Bounds().Dy())
+			image.HistogramNormalizedB.Values[i] /= float64(image.Image.Image.Bounds().Dx() * image.Image.Image.Bounds().Dy())
+		}
 
 }
