@@ -38,7 +38,7 @@ func (ui *UI) Init() {
 		ui.tabs.Select(tabItem)
 		dialog := dialog.NewConfirm("Close", "Are you sure you want to close "+tabItem.Text+" ?",
 			func(choice bool) {
-				if choice == false {
+				if !choice{
 					return
 				}
 				ui.removeImage(ui.tabs.SelectedIndex(), tabItem)
