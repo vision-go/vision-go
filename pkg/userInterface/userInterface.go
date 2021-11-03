@@ -98,33 +98,6 @@ func (ui *UI) removeImage(index int, tabItem *container.TabItem) {
 	}
 }
 
-func (ui *UI) negativeOp() {
-	if ui.tabs.SelectedIndex() == -1 {
-		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
-		return
-	}
-	ui.newImage(ui.tabsElements[ui.tabs.SelectedIndex()].Negative(), ui.tabs.Selected().Text+"(Negative)") // TODO Improve name
-}
-
-func (ui *UI) monochromeOp() {
-	if ui.tabs.SelectedIndex() == -1 {
-		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
-		return
-	}
-	ui.newImage(ui.tabsElements[ui.tabs.SelectedIndex()].Monochrome(), ui.tabs.Selected().Text+"(Monochrome)") // TODO Improve name
-}
-
-func (ui *UI) linearTransformationOp() {
-  // if ui.tabs.SelectedIndex() == -1 {
-  //   dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
-  //   return
-  // }
-  point := container.NewGridWithColumns(2, widget.NewLabel("Point"), widget.NewEntry())
-  dialog.ShowCustomConfirm("Linear Transformation", "OK", "Cancel", point, func(bool) {
-
-  }, ui.MainWindow)
-}
-
 func (ui *UI) infoView() {
 	if ui.tabs.SelectedIndex() == -1 {
 		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
