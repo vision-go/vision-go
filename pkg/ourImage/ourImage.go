@@ -6,6 +6,7 @@ import (
 	"image/draw"
 	_ "image/jpeg"
 	_ "image/png"
+	"math"
 	"os"
 	"strconv"
 
@@ -14,14 +15,30 @@ import (
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/widget"
 
+	histogram "github.com/vision-go/vision-go/pkg/histogram"
 	lookUpTable "github.com/vision-go/vision-go/pkg/look-up-table"
 )
 
 type OurImage struct {
 	widget.BaseWidget
-	canvasImage *canvas.Image
-	format      string
-	statusBar   *widget.Label
+	Image      *canvas.Image
+	format     string
+	statusBar  *widget.Label
+
+	HistogramR histogram.Histogram
+	HistogramG histogram.Histogram
+	HistogramB histogram.Histogram
+	Histogram  histogram.Histogram
+
+	HistogramAccumulativeR histogram.Histogram
+	HistogramAccumulativeG histogram.Histogram
+	HistogramAccumulativeB histogram.Histogram
+	HistogramAccumulative histogram.Histogram
+
+	HistogramNormalizedR histogram.HistogramNormalized
+	HistogramNormalizedG histogram.HistogramNormalized
+	HistogramNormalizedB histogram.HistogramNormalized
+	HistogramNormalized histogram.HistogramNormalized
 }
 
 func (self *OurImage) MouseIn(mouse *desktop.MouseEvent) {
@@ -75,8 +92,11 @@ func NewImage(path string, statusBar *widget.Label) (OurImage, error) {
 	} else if err != nil {
 		return img, err
 	}
-	img.canvasImage = canvas.NewImageFromImage(inputImg)
-	img.canvasImage.FillMode = canvas.ImageFillOriginal
+	img.Image = canvas.NewImageFromImage(inputImg)
+	img.Image.FillMode = canvas.ImageFillOriginal
+
+	makeHistogram(&img)
+
 	return img, nil
 }
 
@@ -116,7 +136,56 @@ func (originalImg *OurImage) Monochrome() OurImage { // TODO it makes a copy
 			NewImage.Set(x, y, color.Gray{Y: uint8(0.222*float32(r>>8) + 0.707*float32(g>>8) + 0.071*float32(b>>8))})
 		}
 	}
-	newOurImage := *originalImg
-	newOurImage.canvasImage = canvas.NewImageFromImage(NewImage)
+	newOurImage := originalImg
+	newOurImage.Image = canvas.NewImageFromImage(NewImage)
+	makeHistogram(&newOurImage)
 	return newOurImage
+}
+
+func makeHistogram(image *OurImage) {
+	for i := 0; i < 256; i++ {
+		image.HistogramR.Values[i] = 0
+		image.HistogramG.Values[i] = 0
+		image.HistogramB.Values[i] = 0
+		image.Histogram.Values[i] = 0
+
+		image.HistogramAccumulativeR.Values[i] = 0
+		image.HistogramAccumulativeG.Values[i] = 0
+		image.HistogramAccumulativeB.Values[i] = 0
+		image.HistogramAccumulative.Values[i] = 0
+
+		image.HistogramNormalized.Values[i] = 0.0
+		image.HistogramNormalizedR.Values[i] = 0.0
+		image.HistogramNormalizedG.Values[i] = 0.0
+		image.HistogramNormalizedB.Values[i] = 0.0
+	}
+	for i := 0; i < image.Image.Image.Bounds().Dx(); i++ {
+		for j := 0; j < image.Image.Image.Bounds().Dy(); j++ {
+			r, g, b, a := image.Image.Image.At(i, j).RGBA()
+			if a != 0 {
+				r, g, b = r>>8, g>>8, b>>8
+				image.HistogramR.Values[r] = image.HistogramR.At(int(r)) + 1
+				image.HistogramG.Values[g] = image.HistogramG.At(int(r)) + 1
+				image.HistogramB.Values[b] = image.HistogramG.At(int(r)) + 1
+
+				grey := 0.222*float64(r) + 0.707*float64(g) + 0.071*float64(b) // PAL
+				image.Histogram.Values[int(math.Round(grey))] = image.Histogram.At(int(math.Round(grey))) + 1
+			}
+		}
+	}
+	for index, _ := range image.Histogram.Values{
+		for i := 0; i < index; i++{	
+			image.HistogramAccumulativeR.Values[index] += image.HistogramR.At(i)
+			image.HistogramAccumulativeG.Values[index] += image.HistogramG.At(i)
+			image.HistogramAccumulativeB.Values[index] += image.HistogramB.At(i)
+			image.HistogramAccumulative.Values[index] += image.Histogram.At(i)
+		}
+	}
+		for i := 0; i < 256; i++{	
+			image.HistogramNormalized.Values[i] /= float64(image.Image.Image.Bounds().Dx() * image.Image.Image.Bounds().Dy())
+			image.HistogramNormalizedR.Values[i] /= float64(image.Image.Image.Bounds().Dx() * image.Image.Image.Bounds().Dy())
+			image.HistogramNormalizedG.Values[i] /= float64(image.Image.Image.Bounds().Dx() * image.Image.Image.Bounds().Dy())
+			image.HistogramNormalizedB.Values[i] /= float64(image.Image.Image.Bounds().Dx() * image.Image.Image.Bounds().Dy())
+		}
+
 }
