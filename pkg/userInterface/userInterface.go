@@ -2,8 +2,8 @@ package userinterface
 
 import (
 	"fmt"
-	"image"
 	"image/png"
+	"log"
 	"os"
 
 	"fyne.io/fyne/v2"
@@ -13,9 +13,8 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/widget"
-	"gonum.org/v1/plot"
-	"gonum.org/v1/plot/plotter"
-	"gonum.org/v1/plot/vg"
+	"github.com/wcharczuk/go-chart/v2"
+	"github.com/wcharczuk/go-chart/v2/drawing"
 
 	ourimage "github.com/vision-go/vision-go/pkg/ourImage"
 )
@@ -116,16 +115,111 @@ func (ui *UI) histogram() {
 	a := ui.App.NewWindow(ui.tabs.Selected().Text + "(Histogram)")
 	a.Resize(fyne.NewSize(500, 500))
 	a.Show()
-	fmt.Printf("%v", ui.tabsElements[ui.tabs.SelectedIndex()].Histogram)
-	plot := plot.New()
-	hist, _ := plotter.NewHistogram(ui.tabsElements[ui.tabs.SelectedIndex()].Histogram, 300)
-	hist.Color.RGBA()
-	plot.Add(hist)
-	plot.Title.Text = ui.tabs.Selected().Text + "(Histogram)"
-	if err := plot.Save(10*vg.Inch, 10*vg.Inch, "tmp/hist.png"); err != nil {
-		panic(err)
+
+
+	var RedGraph []float64
+	var GreenGraph []float64
+	var BlueGraph []float64
+
+	var GrayGraph []float64
+	var indexValues []float64
+
+	for i := 0; i < 256; i++{
+		indexValues = append(indexValues, float64(i))
+		GrayGraph = append(GrayGraph, float64(ui.tabsElements[ui.tabs.SelectedIndex()].Histogram.Values[i])) 
+		RedGraph = append(RedGraph, float64(ui.tabsElements[ui.tabs.SelectedIndex()].HistogramR.Values[i]))
+		GreenGraph = append(GreenGraph, float64(ui.tabsElements[ui.tabs.SelectedIndex()].HistogramG.Values[i]))
+		BlueGraph = append(BlueGraph,float64(ui.tabsElements[ui.tabs.SelectedIndex()].HistogramB.Values[i]))
 	}
-	f, _ := os.Open("tmp/hist.png")
-	img, _, _ := image.Decode(f)
-	a.SetContent(canvas.NewImageFromImage(img))
+	graph := chart.Chart{
+		Series: []chart.Series{
+			chart.ContinuousSeries{
+				Style: chart.Style{
+					StrokeColor: drawing.Color{
+						R:255,
+						G:0,
+						B:0,
+						A:255,
+					},
+					FillColor: drawing.Color{
+						R:255,
+						G:0,
+						B:0,
+						A:127,
+					},
+				},
+				XValues: indexValues,
+				YValues: RedGraph,
+			},
+			chart.ContinuousSeries{
+				Style: chart.Style{
+					StrokeColor: drawing.Color{
+						R:0,
+						G:255,
+						B:0,
+						A:255,
+					},
+					FillColor: drawing.Color{
+						R:0,
+						G:255,
+						B:0,
+						A:127,
+					},
+				},
+				XValues: indexValues,
+				YValues: GreenGraph,
+			},
+			chart.ContinuousSeries{
+				Style: chart.Style{
+					StrokeWidth: 2.0,
+					StrokeColor: drawing.Color{
+						R:0,
+						G:0,
+						B:255,
+						A:255,
+					},
+					FillColor: drawing.Color{
+						R:0,
+						G:0,
+						B:255,
+						A:127,
+					},
+				},
+				XValues: indexValues,
+				YValues: BlueGraph,
+			},
+			chart.ContinuousSeries{
+				XValueFormatter: chart.IntValueFormatter,
+				YValueFormatter: chart.IntValueFormatter,
+				Style: chart.Style{
+					StrokeColor: drawing.Color{
+						R:0,
+						G:0,
+						B:0,
+						A:255,
+					},
+					FillColor: drawing.Color{
+						R:0,
+						G:0,
+						B:0,
+						A:127,
+					},
+				},
+				XValues: indexValues,
+				YValues: GrayGraph,
+			},
+		},
+	}
+	collector := &chart.ImageWriter{}
+	graph.Render(chart.PNG, collector)
+
+	image, err := collector.Image()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("Final Image: %dx%d\n", image.Bounds().Size().X, image.Bounds().Size().Y)
+
+
+
+	a.SetContent(canvas.NewImageFromImage(image))
 }

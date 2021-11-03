@@ -26,6 +26,11 @@ type OurImage struct {
 	HistogramG histogram.Histogram
 	HistogramB histogram.Histogram
 	Histogram  histogram.Histogram
+
+	HistogramAccumulativeR histogram.Histogram
+	HistogramAccumulativeG histogram.Histogram
+	HistogramAccumulativeB histogram.Histogram
+	HistogramAccumulative histogram.Histogram
 }
 
 func (self *OurImage) MouseIn(mouse *desktop.MouseEvent) {
@@ -107,6 +112,17 @@ func Negative(originalImg OurImage) OurImage { // TODO it makes a copy
 }
 
 func makeHistogram(image *OurImage) {
+	for i := 0; i < 256; i++ {
+		image.HistogramR.Values[i] = 0
+		image.HistogramG.Values[i] = 0
+		image.HistogramB.Values[i] = 0
+		image.Histogram.Values[i] = 0
+
+		image.HistogramAccumulativeR.Values[i] = 0
+		image.HistogramAccumulativeG.Values[i] = 0
+		image.HistogramAccumulativeB.Values[i] = 0
+		image.HistogramAccumulative.Values[i] = 0
+	}
 	for i := 0; i < image.Image.Image.Bounds().Dx(); i++ {
 		for j := 0; j < image.Image.Image.Bounds().Dy(); j++ {
 			r, g, b, a := image.Image.Image.At(i, j).RGBA()
@@ -114,10 +130,19 @@ func makeHistogram(image *OurImage) {
 				r, g, b = r>>8, g>>8, b>>8
 				image.HistogramR.Values[r] = image.HistogramR.At(int(r)) + 1
 				image.HistogramG.Values[g] = image.HistogramG.At(int(r)) + 1
-				image.HistogramG.Values[b] = image.HistogramG.At(int(r)) + 1
-				grey := 0.222*float64(r) + 0.707*float64(g) + 0.071*float64(b)
+				image.HistogramB.Values[b] = image.HistogramG.At(int(r)) + 1
+
+				grey := 0.222*float64(r) + 0.707*float64(g) + 0.071*float64(b) // PAL
 				image.Histogram.Values[int(math.Round(grey))] = image.Histogram.At(int(math.Round(grey))) + 1
 			}
+		}
+	}
+	for index, _ := range image.Histogram.Values{
+		for i := 0; i < index; i++{	
+			image.HistogramAccumulativeR.Values[index] += image.HistogramR.At(i)
+			image.HistogramAccumulativeG.Values[index] += image.HistogramG.At(i)
+			image.HistogramAccumulativeB.Values[index] += image.HistogramB.At(i)
+			image.HistogramAccumulative.Values[index] += image.Histogram.At(i)
 		}
 	}
 
