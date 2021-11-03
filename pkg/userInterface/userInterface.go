@@ -5,6 +5,7 @@ import (
 	"image"
 	"log"
 	"os"
+	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -73,6 +74,13 @@ func (ui *UI) Init() {
 	ui.MainWindow.ShowAndRun()
 }
 
+func (ui UI) getCurrentImage() (*ourimage.OurImage, error) {
+  if ui.tabs.SelectedIndex() == -1 {
+    return nil, fmt.Errorf("No image selected")
+  }
+  return ui.tabsElements[ui.tabs.SelectedIndex()], nil
+}
+
 func (ui *UI) openDialog() {
 	dialog := dialog.NewFileOpen(func(reader fyne.URIReadCloser, err error) {
 		if err != nil {
@@ -94,30 +102,48 @@ func (ui *UI) openDialog() {
 }
 
 func (ui *UI) saveAsDialog() {
-	dialog := dialog.NewFileSave(func(writer fyne.URIWriteCloser, err error) {
-		if err != nil {
-			dialog.ShowError(err, ui.MainWindow)
-		}
-		if err == nil && writer == nil {
-			return
-		}
-		if len(ui.tabs.Items) == 0 {
-			dialog.ShowInformation("Error", "You must open atleast one image", ui.MainWindow)
-			return
-		}
-		outputFile, errFile := os.Create(writer.URI().Path())
-		defer outputFile.Close()
-		if errFile != nil {
-			dialog.ShowError(errFile, ui.MainWindow)
-		}
+	if ui.tabs.SelectedIndex() == -1 {
+		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
+		return
+	}
+  formatName := func(originalName, format string) string {
+    pointIndex := strings.LastIndex(originalName, ".")
+    if pointIndex == -1 {
+      return originalName + "." + format
+    }
+    return originalName[:pointIndex+1] + format
+  }
 
-    // TODO
-		//png.Encode(outputFile, ui.tabsElements[ui.tabs.SelectedIndex()].Image.canvasImage)
+  selectionWidget := widget.NewRadioGroup([]string{"png", "jpg"}, func (string) {})
+  selectionWidget.SetSelected("png")
+  dialog.ShowCustomConfirm("Select format", "Ok", "Cancel", selectionWidget,
+    func(choice bool) {
+      if !choice {
+        return
+      }
+      dialog := dialog.NewFileSave(func(writer fyne.URIWriteCloser, err error) {
+        if err != nil {
+          dialog.ShowError(err, ui.MainWindow)
+        }
+        if writer == nil {
+          return
+        }
+        outputFile, errFile := os.Create(writer.URI().Path())
+        if errFile != nil {
+          dialog.ShowError(errFile, ui.MainWindow)
+        }
+        defer outputFile.Close()
 
-	}, ui.MainWindow)
-	dialog.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpeg", ".jpg", ".tfe"})) // TODO delete this?
-	dialog.SetFileName(ui.tabs.Selected().Text)
-	dialog.Show()
+        img, _ := ui.getCurrentImage() // Already checked
+        err = img.Save(outputFile, selectionWidget.Selected)
+        if err != nil {
+          dialog.ShowError(err, ui.MainWindow)
+        }
+      }, ui.MainWindow)
+      dialog.SetFileName(formatName(ui.tabs.Selected().Text, selectionWidget.Selected))
+      dialog.Show()
+    },
+    ui.MainWindow)
 }
 
 func (ui *UI) ROIcallback(cropped *ourimage.OurImage) {

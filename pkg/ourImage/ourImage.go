@@ -1,9 +1,12 @@
 package ourimage
 
 import (
+	"fmt"
 	"image"
 	"image/color"
+	"image/jpeg"
 	_ "image/jpeg"
+	"image/png"
 	_ "image/png"
 	"math"
 	"os"
@@ -139,6 +142,15 @@ func newFromImage(ourImage *OurImage, newImage image.Image, actionForName string
 	img.canvasImage.FillMode = canvas.ImageFillOriginal
 	makeHistogram(img)
 	return img
+}
+
+func (img OurImage) Save(file *os.File, format string) error {
+  if format == "png" {
+    return png.Encode(file, img.canvasImage.Image)
+  } else if format == "jpeg" || format == "jpg" {
+    return jpeg.Encode(file, img.canvasImage.Image, nil)
+  }
+  return fmt.Errorf("Incorrrect format")
 }
 
 func (img OurImage) Name() string {
