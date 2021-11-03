@@ -82,11 +82,12 @@ func (ui *UI) openDialog() {
 		if reader == nil {
 			return
 		}
-		img, err := ourimage.NewImage(reader.URI().Path(), ui.label)
+		img, err := ourimage.NewFromPath(reader.URI().Path(), reader.URI().Name(),
+      ui.label, ui.MainWindow, ui.ROIcallback)
 		if err != nil {
 			dialog.ShowError(err, ui.MainWindow)
 		}
-		ui.newImage(img, reader.URI().Name())
+		ui.newImage(img)
 	}, ui.MainWindow)
 	dialog.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpeg", ".jpg", ".tfe"}))
 	dialog.Show()
@@ -105,23 +106,35 @@ func (ui *UI) saveAsDialog() {
 			return
 		}
 		outputFile, errFile := os.Create(writer.URI().Path())
+		defer outputFile.Close()
 		if errFile != nil {
 			dialog.ShowError(errFile, ui.MainWindow)
 		}
 
+    // TODO
 		//png.Encode(outputFile, ui.tabsElements[ui.tabs.SelectedIndex()].Image.canvasImage)
 
-		outputFile.Close()
 	}, ui.MainWindow)
-	dialog.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpeg", ".jpg", ".tfe"}))
+	dialog.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpeg", ".jpg", ".tfe"})) // TODO delete this?
 	dialog.SetFileName(ui.tabs.Selected().Text)
 	dialog.Show()
 }
 
-func (ui *UI) newImage(img ourimage.OurImage, name string) {
-	ui.tabs.Append(container.NewTabItem(name, container.NewScroll(container.New(layout.NewCenterLayout(), &img))))
+func (ui *UI) ROIcallback(cropped *ourimage.OurImage) {
+	dialog.ShowCustomConfirm("Do you want this sub-image?", "Ok", "Cancel", container.NewCenter(cropped),
+		func(choice bool) {
+			if !choice {
+				return
+			}
+      ui.newImage(cropped)
+		},
+		ui.MainWindow)
+}
+
+func (ui *UI) newImage(img *ourimage.OurImage) {
+	ui.tabs.Append(container.NewTabItem(img.Name(), container.NewScroll(container.New(layout.NewCenterLayout(), img))))
 	ui.tabs.SelectIndex(len(ui.tabs.Items) - 1) // Select the last one
-	ui.tabsElements = append(ui.tabsElements, &img)
+	ui.tabsElements = append(ui.tabsElements, img)
 	if len(ui.tabsElements) != 0 {
 		ui.tabs.Show()
 	}
@@ -136,16 +149,14 @@ func (ui *UI) removeImage(index int, tabItem *container.TabItem) {
 }
 
 func (ui *UI) infoView() {
-	if ui.tabs.SelectedIndex() == -1 {
-		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
-		return
-	}
 	format := ui.tabsElements[ui.tabs.SelectedIndex()].Format()
 	size := ui.tabsElements[ui.tabs.SelectedIndex()].Dimensions()
 	message := fmt.Sprintf("Format: %v\n Size: %v bytes (%v x %v)", format, humanize.Bytes(uint64(size.X*size.Y)), size.X, size.Y)
 	dialog := dialog.NewInformation("Information", message, ui.MainWindow)
 	dialog.Show()
 }
+
+// Operations
 
 func (ui *UI) histogram() {
 	if ui.tabs.SelectedIndex() == -1 {
