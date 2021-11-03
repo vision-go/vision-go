@@ -39,7 +39,7 @@ func (ui *UI) Init() {
 		ui.tabs.Select(tabItem)
 		dialog := dialog.NewConfirm("Close", "Are you sure you want to close "+tabItem.Text+" ?",
 			func(choice bool) {
-				if !choice{
+				if !choice {
 					return
 				}
 				ui.removeImage(ui.tabs.SelectedIndex(), tabItem)
@@ -58,7 +58,7 @@ func (ui *UI) Init() {
 		fyne.NewMenu("Image",
 			fyne.NewMenuItem("Negative", ui.negativeOp),
 			fyne.NewMenuItem("Monochrome", ui.monochromeOp),
-      fyne.NewMenuItem("Linear Transformation", ui.linearTransformationOp),
+			fyne.NewMenuItem("Linear Transformation", ui.linearTransformationOp),
 		),
 		fyne.NewMenu("View",
 			fyne.NewMenuItem("Info", ui.infoView),
@@ -75,10 +75,10 @@ func (ui *UI) Init() {
 }
 
 func (ui UI) getCurrentImage() (*ourimage.OurImage, error) {
-  if ui.tabs.SelectedIndex() == -1 {
-    return nil, fmt.Errorf("No image selected")
-  }
-  return ui.tabsElements[ui.tabs.SelectedIndex()], nil
+	if ui.tabs.SelectedIndex() == -1 {
+		return nil, fmt.Errorf("No image selected")
+	}
+	return ui.tabsElements[ui.tabs.SelectedIndex()], nil
 }
 
 func (ui *UI) openDialog() {
@@ -91,7 +91,7 @@ func (ui *UI) openDialog() {
 			return
 		}
 		img, err := ourimage.NewFromPath(reader.URI().Path(), reader.URI().Name(),
-      ui.label, ui.MainWindow, ui.ROIcallback)
+			ui.label, ui.MainWindow, ui.ROIcallback)
 		if err != nil {
 			dialog.ShowError(err, ui.MainWindow)
 		}
@@ -106,44 +106,44 @@ func (ui *UI) saveAsDialog() {
 		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
 		return
 	}
-  formatName := func(originalName, format string) string {
-    pointIndex := strings.LastIndex(originalName, ".")
-    if pointIndex == -1 {
-      return originalName + "." + format
-    }
-    return originalName[:pointIndex+1] + format
-  }
+	formatName := func(originalName, format string) string {
+		pointIndex := strings.LastIndex(originalName, ".")
+		if pointIndex == -1 {
+			return originalName + "." + format
+		}
+		return originalName[:pointIndex+1] + format
+	}
 
-  selectionWidget := widget.NewRadioGroup([]string{"png", "jpg"}, func (string) {})
-  selectionWidget.SetSelected("png")
-  dialog.ShowCustomConfirm("Select format", "Ok", "Cancel", selectionWidget,
-    func(choice bool) {
-      if !choice {
-        return
-      }
-      dialog := dialog.NewFileSave(func(writer fyne.URIWriteCloser, err error) {
-        if err != nil {
-          dialog.ShowError(err, ui.MainWindow)
-        }
-        if writer == nil {
-          return
-        }
-        outputFile, errFile := os.Create(writer.URI().Path())
-        if errFile != nil {
-          dialog.ShowError(errFile, ui.MainWindow)
-        }
-        defer outputFile.Close()
+	selectionWidget := widget.NewRadioGroup([]string{"png", "jpg"}, func(string) {})
+	selectionWidget.SetSelected("png")
+	dialog.ShowCustomConfirm("Select format", "Ok", "Cancel", selectionWidget,
+		func(choice bool) {
+			if !choice {
+				return
+			}
+			dialog := dialog.NewFileSave(func(writer fyne.URIWriteCloser, err error) {
+				if err != nil {
+					dialog.ShowError(err, ui.MainWindow)
+				}
+				if writer == nil {
+					return
+				}
+				outputFile, errFile := os.Create(writer.URI().Path())
+				if errFile != nil {
+					dialog.ShowError(errFile, ui.MainWindow)
+				}
+				defer outputFile.Close()
 
-        img, _ := ui.getCurrentImage() // Already checked
-        err = img.Save(outputFile, selectionWidget.Selected)
-        if err != nil {
-          dialog.ShowError(err, ui.MainWindow)
-        }
-      }, ui.MainWindow)
-      dialog.SetFileName(formatName(ui.tabs.Selected().Text, selectionWidget.Selected))
-      dialog.Show()
-    },
-    ui.MainWindow)
+				img, _ := ui.getCurrentImage() // Already checked
+				err = img.Save(outputFile, selectionWidget.Selected)
+				if err != nil {
+					dialog.ShowError(err, ui.MainWindow)
+				}
+			}, ui.MainWindow)
+			dialog.SetFileName(formatName(ui.tabs.Selected().Text, selectionWidget.Selected))
+			dialog.Show()
+		},
+		ui.MainWindow)
 }
 
 func (ui *UI) ROIcallback(cropped *ourimage.OurImage) {
@@ -152,7 +152,7 @@ func (ui *UI) ROIcallback(cropped *ourimage.OurImage) {
 			if !choice {
 				return
 			}
-      ui.newImage(cropped)
+			ui.newImage(cropped)
 		},
 		ui.MainWindow)
 }

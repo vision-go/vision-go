@@ -5,9 +5,7 @@ import (
 	"image"
 	"image/color"
 	"image/jpeg"
-	_ "image/jpeg"
 	"image/png"
-	_ "image/png"
 	"math"
 	"os"
 	"strconv"
@@ -24,10 +22,10 @@ import (
 
 type OurImage struct {
 	widget.BaseWidget
-  name string
-	canvasImage      *canvas.Image
-	format     string
-	statusBar  *widget.Label
+	name        string
+	canvasImage *canvas.Image
+	format      string
+	statusBar   *widget.Label
 	mainWindow  fyne.Window
 	rectangle   image.Rectangle
 	ROIcallback func(*OurImage)
@@ -40,12 +38,12 @@ type OurImage struct {
 	HistogramAccumulativeR histogram.Histogram
 	HistogramAccumulativeG histogram.Histogram
 	HistogramAccumulativeB histogram.Histogram
-	HistogramAccumulative histogram.Histogram
+	HistogramAccumulative  histogram.Histogram
 
 	HistogramNormalizedR histogram.HistogramNormalized
 	HistogramNormalizedG histogram.HistogramNormalized
 	HistogramNormalizedB histogram.HistogramNormalized
-	HistogramNormalized histogram.HistogramNormalized
+	HistogramNormalized  histogram.HistogramNormalized
 }
 
 func (self *OurImage) MouseIn(mouse *desktop.MouseEvent) {
@@ -60,7 +58,7 @@ func (self *OurImage) MouseMoved(mouse *desktop.MouseEvent) {
 	if self.statusBar != nil {
 		r, g, b, a := self.canvasImage.Image.At(int(mouse.Position.X), int(mouse.Position.Y)).RGBA()
 		self.statusBar.SetText("R: " + strconv.Itoa(int(r>>8)) + " || G: " + strconv.Itoa(int(g>>8)) + " || B: " + strconv.Itoa(int(b>>8)) + " || A: " + strconv.Itoa(int(a>>8)))
-	} 
+	}
 }
 
 // MouseOut is a hook that is called if the mouse pointer leaves the element.
@@ -77,9 +75,9 @@ func (ourimage *OurImage) MouseDown(mouseEvent *desktop.MouseEvent) {
 
 func (ourimage *OurImage) MouseUp(mouseEvent *desktop.MouseEvent) {
 	ourimage.rectangle.Max = image.Pt(int(math.Round(float64(mouseEvent.Position.X))), int(math.Round(float64(mouseEvent.Position.Y))))
-  if ourimage.rectangle.Dx() > 10 && ourimage.rectangle.Dy() > 10 {
-    ourimage.ROIcallback(ourimage.ROI(ourimage.rectangle))
-  }
+	if ourimage.rectangle.Dx() > 10 && ourimage.rectangle.Dy() > 10 {
+		ourimage.ROIcallback(ourimage.ROI(ourimage.rectangle))
+	}
 }
 
 func (self *OurImage) CreateRenderer() fyne.WidgetRenderer {
@@ -88,7 +86,7 @@ func (self *OurImage) CreateRenderer() fyne.WidgetRenderer {
 
 func NewFromPath(path, name string, statusBar *widget.Label, w fyne.Window, ROIcallback func(*OurImage)) (*OurImage, error) {
 	img := &OurImage{}
-  img.name = name
+	img.name = name
 	img.statusBar = statusBar
 	img.mainWindow = w
 	img.ROIcallback = ROIcallback
@@ -123,17 +121,17 @@ func NewFromPath(path, name string, statusBar *widget.Label, w fyne.Window, ROIc
 }
 
 func (img OurImage) addOperationToName(actionForName string) string {
-  actionForName = "(" + actionForName + ")"
-  pointIndex := strings.LastIndex(img.name, ".")
-  if pointIndex == -1 {
-    return img.name + actionForName
-  }
-  return img.name[:pointIndex] + actionForName + img.name[pointIndex:]
+	actionForName = "(" + actionForName + ")"
+	pointIndex := strings.LastIndex(img.name, ".")
+	if pointIndex == -1 {
+		return img.name + actionForName
+	}
+	return img.name[:pointIndex] + actionForName + img.name[pointIndex:]
 }
 
 func newFromImage(ourImage *OurImage, newImage image.Image, actionForName string) *OurImage {
 	img := &OurImage{}
-  img.name = ourImage.addOperationToName(actionForName)
+	img.name = ourImage.addOperationToName(actionForName)
 	img.statusBar = ourImage.statusBar
 	img.mainWindow = ourImage.mainWindow
 	img.ROIcallback = ourImage.ROIcallback
@@ -145,16 +143,16 @@ func newFromImage(ourImage *OurImage, newImage image.Image, actionForName string
 }
 
 func (img OurImage) Save(file *os.File, format string) error {
-  if format == "png" {
-    return png.Encode(file, img.canvasImage.Image)
-  } else if format == "jpeg" || format == "jpg" {
-    return jpeg.Encode(file, img.canvasImage.Image, nil)
-  }
-  return fmt.Errorf("Incorrrect format")
+	if format == "png" {
+		return png.Encode(file, img.canvasImage.Image)
+	} else if format == "jpeg" || format == "jpg" {
+		return jpeg.Encode(file, img.canvasImage.Image, nil)
+	}
+	return fmt.Errorf("Incorrrect format")
 }
 
 func (img OurImage) Name() string {
-  return img.name
+	return img.name
 }
 
 func (img OurImage) Format() string {
@@ -176,7 +174,7 @@ func (originalImg *OurImage) Negative() *OurImage { // TODO it makes a copy
 			NewImage.Set(x, y, lookUpTable.RGBA(oldColour, lookUpTable.Negative))
 		}
 	}
-  return newFromImage(originalImg, NewImage, "Negative")
+	return newFromImage(originalImg, NewImage, "Negative")
 }
 
 func (originalImg *OurImage) Monochrome() *OurImage { // TODO it makes a copy
@@ -190,7 +188,7 @@ func (originalImg *OurImage) Monochrome() *OurImage { // TODO it makes a copy
 			NewImage.Set(x, y, color.Gray{Y: uint8(0.222*float32(r>>8) + 0.707*float32(g>>8) + 0.071*float32(b>>8))}) // PAL
 		}
 	}
-  return newFromImage(originalImg, NewImage, "Monochrome")
+	return newFromImage(originalImg, NewImage, "Monochrome")
 }
 
 func (originalImg *OurImage) ROI(rect image.Rectangle) *OurImage {
@@ -201,7 +199,7 @@ func (originalImg *OurImage) ROI(rect image.Rectangle) *OurImage {
 			NewImage.Set(x, y, originalImg.canvasImage.Image.At(x+rect.Min.X, y+rect.Min.Y))
 		}
 	}
-  return newFromImage(originalImg, NewImage, "ROI")
+	return newFromImage(originalImg, NewImage, "ROI")
 }
 
 func makeHistogram(image *OurImage) {
@@ -235,19 +233,19 @@ func makeHistogram(image *OurImage) {
 			}
 		}
 	}
-	for index := range image.Histogram.Values{
-		for i := 0; i < index; i++{	
+	for index := range image.Histogram.Values {
+		for i := 0; i < index; i++ {
 			image.HistogramAccumulativeR.Values[index] += image.HistogramR.At(i)
 			image.HistogramAccumulativeG.Values[index] += image.HistogramG.At(i)
 			image.HistogramAccumulativeB.Values[index] += image.HistogramB.At(i)
 			image.HistogramAccumulative.Values[index] += image.Histogram.At(i)
 		}
 	}
-		for i := 0; i < 256; i++{	
-			image.HistogramNormalized.Values[i] = float64(image.Histogram.Values[i]) / float64(image.canvasImage.Image.Bounds().Dx() * image.canvasImage.Image.Bounds().Dy())
-			image.HistogramNormalizedR.Values[i] = float64(image.HistogramR.Values[i])/float64(image.canvasImage.Image.Bounds().Dx() * image.canvasImage.Image.Bounds().Dy())
-			image.HistogramNormalizedG.Values[i] = float64(image.HistogramG.Values[i])/float64(image.canvasImage.Image.Bounds().Dx() * image.canvasImage.Image.Bounds().Dy())
-			image.HistogramNormalizedB.Values[i] = float64(image.HistogramB.Values[i])/float64(image.canvasImage.Image.Bounds().Dx() * image.canvasImage.Image.Bounds().Dy())
-		}
+	for i := 0; i < 256; i++ {
+		image.HistogramNormalized.Values[i] = float64(image.Histogram.Values[i]) / float64(image.canvasImage.Image.Bounds().Dx()*image.canvasImage.Image.Bounds().Dy())
+		image.HistogramNormalizedR.Values[i] = float64(image.HistogramR.Values[i]) / float64(image.canvasImage.Image.Bounds().Dx()*image.canvasImage.Image.Bounds().Dy())
+		image.HistogramNormalizedG.Values[i] = float64(image.HistogramG.Values[i]) / float64(image.canvasImage.Image.Bounds().Dx()*image.canvasImage.Image.Bounds().Dy())
+		image.HistogramNormalizedB.Values[i] = float64(image.HistogramB.Values[i]) / float64(image.canvasImage.Image.Bounds().Dx()*image.canvasImage.Image.Bounds().Dy())
+	}
 
 }
