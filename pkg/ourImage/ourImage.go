@@ -21,7 +21,7 @@ import (
 
 type OurImage struct {
 	widget.BaseWidget
-	Image      *canvas.Image
+	canvasImage      *canvas.Image
 	format     string
 	statusBar  *widget.Label
 
@@ -92,8 +92,8 @@ func NewImage(path string, statusBar *widget.Label) (OurImage, error) {
 	} else if err != nil {
 		return img, err
 	}
-	img.Image = canvas.NewImageFromImage(inputImg)
-	img.Image.FillMode = canvas.ImageFillOriginal
+	img.canvasImage = canvas.NewImageFromImage(inputImg)
+	img.canvasImage.FillMode = canvas.ImageFillOriginal
 
 	makeHistogram(&img)
 
@@ -136,8 +136,8 @@ func (originalImg *OurImage) Monochrome() OurImage { // TODO it makes a copy
 			NewImage.Set(x, y, color.Gray{Y: uint8(0.222*float32(r>>8) + 0.707*float32(g>>8) + 0.071*float32(b>>8))})
 		}
 	}
-	newOurImage := originalImg
-	newOurImage.Image = canvas.NewImageFromImage(NewImage)
+	newOurImage := *originalImg
+	newOurImage.canvasImage = canvas.NewImageFromImage(NewImage)
 	makeHistogram(&newOurImage)
 	return newOurImage
 }
@@ -159,9 +159,9 @@ func makeHistogram(image *OurImage) {
 		image.HistogramNormalizedG.Values[i] = 0.0
 		image.HistogramNormalizedB.Values[i] = 0.0
 	}
-	for i := 0; i < image.Image.Image.Bounds().Dx(); i++ {
-		for j := 0; j < image.Image.Image.Bounds().Dy(); j++ {
-			r, g, b, a := image.Image.Image.At(i, j).RGBA()
+	for i := 0; i < image.canvasImage.Image.Bounds().Dx(); i++ {
+		for j := 0; j < image.canvasImage.Image.Bounds().Dy(); j++ {
+			r, g, b, a := image.canvasImage.Image.At(i, j).RGBA()
 			if a != 0 {
 				r, g, b = r>>8, g>>8, b>>8
 				image.HistogramR.Values[r] = image.HistogramR.At(int(r)) + 1
@@ -173,7 +173,7 @@ func makeHistogram(image *OurImage) {
 			}
 		}
 	}
-	for index, _ := range image.Histogram.Values{
+	for index := range image.Histogram.Values{
 		for i := 0; i < index; i++{	
 			image.HistogramAccumulativeR.Values[index] += image.HistogramR.At(i)
 			image.HistogramAccumulativeG.Values[index] += image.HistogramG.At(i)
@@ -182,10 +182,10 @@ func makeHistogram(image *OurImage) {
 		}
 	}
 		for i := 0; i < 256; i++{	
-			image.HistogramNormalized.Values[i] /= float64(image.Image.Image.Bounds().Dx() * image.Image.Image.Bounds().Dy())
-			image.HistogramNormalizedR.Values[i] /= float64(image.Image.Image.Bounds().Dx() * image.Image.Image.Bounds().Dy())
-			image.HistogramNormalizedG.Values[i] /= float64(image.Image.Image.Bounds().Dx() * image.Image.Image.Bounds().Dy())
-			image.HistogramNormalizedB.Values[i] /= float64(image.Image.Image.Bounds().Dx() * image.Image.Image.Bounds().Dy())
+			image.HistogramNormalized.Values[i] = float64(image.Histogram.Values[i]) / float64(image.canvasImage.Image.Bounds().Dx() * image.canvasImage.Image.Bounds().Dy())
+			image.HistogramNormalizedR.Values[i] = float64(image.HistogramR.Values[i])/float64(image.canvasImage.Image.Bounds().Dx() * image.canvasImage.Image.Bounds().Dy())
+			image.HistogramNormalizedG.Values[i] = float64(image.HistogramG.Values[i])/float64(image.canvasImage.Image.Bounds().Dx() * image.canvasImage.Image.Bounds().Dy())
+			image.HistogramNormalizedB.Values[i] = float64(image.HistogramB.Values[i])/float64(image.canvasImage.Image.Bounds().Dx() * image.canvasImage.Image.Bounds().Dy())
 		}
 
 }

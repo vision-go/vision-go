@@ -3,7 +3,6 @@ package userinterface
 import (
 	"fmt"
 	"image"
-	"image/png"
 	"log"
 	"os"
 
@@ -14,8 +13,8 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/widget"
-	humanize "github.com/dustin/go-humanize"
 
+	"github.com/dustin/go-humanize"
 	"github.com/wcharczuk/go-chart/v2"
 	"github.com/wcharczuk/go-chart/v2/drawing"
 
@@ -109,7 +108,7 @@ func (ui *UI) saveAsDialog() {
 			dialog.ShowError(errFile, ui.MainWindow)
 		}
 
-		png.Encode(outputFile, ui.tabsElements[ui.tabs.SelectedIndex()].Image.Image)
+		//png.Encode(outputFile, ui.tabsElements[ui.tabs.SelectedIndex()].Image.canvasImage)
 
 		outputFile.Close()
 	}, ui.MainWindow)
@@ -144,7 +143,23 @@ func (ui *UI) negativeOp() {
 }
 
 func (ui *UI) monochromeOp() {
-	ui.newImage(ourimage.Negative((ui.tabsElements[ui.tabs.SelectedIndex()])), ui.tabs.Selected().Text+"(Negative)") // TODO Improve name
+	if ui.tabs.SelectedIndex() == -1 {
+		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
+		return
+}
+	ui.newImage(ui.tabsElements[ui.tabs.SelectedIndex()].Monochrome(), ui.tabs.Selected().Text+"(Monochrome)") // TODO Improve name
+}
+
+func (ui *UI) infoView() {
+	if ui.tabs.SelectedIndex() == -1 {
+		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
+		return
+	}
+	format := ui.tabsElements[ui.tabs.SelectedIndex()].Format()
+	size := ui.tabsElements[ui.tabs.SelectedIndex()].Dimensions()
+	message := fmt.Sprintf("Format: %v\n Size: %v bytes (%v x %v)", format, humanize.Bytes(uint64(size.X*size.Y)), size.X, size.Y)
+	dialog := dialog.NewInformation("Information", message, ui.MainWindow)
+	dialog.Show()
 }
 
 func (ui *UI) histogram() {
@@ -152,16 +167,12 @@ func (ui *UI) histogram() {
 		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
 		return
 	}
-	ui.newImage(ui.tabsElements[ui.tabs.SelectedIndex()].Monochrome(), ui.tabs.Selected().Text+"(Monochrome)") // TODO Improve name
-}
-
-func (ui *UI) infoView() {
 	a := ui.App.NewWindow(ui.tabs.Selected().Text + "(Histogram)")
 	a.Resize(fyne.NewSize(500, 500))
 	a.Show()
 
 	image := ui.calculateHistogramGraph(&ui.tabsElements[ui.tabs.SelectedIndex()].Histogram,
-		&ui.tabsElements[ui.tabs.SelectedInd5ex()].HistogramR,
+		&ui.tabsElements[ui.tabs.SelectedIndex()].HistogramR,
 		&ui.tabsElements[ui.tabs.SelectedIndex()].HistogramG,
 		&ui.tabsElements[ui.tabs.SelectedIndex()].HistogramB)
 
@@ -173,12 +184,7 @@ func (ui *UI) accumulativeHistogram() {
 		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
 		return
 	}
-	format := ui.tabsElements[ui.tabs.SelectedIndex()].Format()
-	size := ui.tabsElements[ui.tabs.SelectedIndex()].Dimensions()
-	message := fmt.Sprintf("Format: %v\n Size: %v bytes (%v x %v)", format, humanize.Bytes(uint64(size.X*size.Y)), size.X, size.Y)
-	dialog := dialog.NewInformation("Information", message, ui.MainWindow)
-	dialog.Show()
-	a := ui.App.NewWindow(ui.tabs.Selected().Text + "(Histogram)")
+	a := ui.App.NewWindow(ui.tabs.Selected().Text + "(AccumulativeHistogram)")
 	a.Resize(fyne.NewSize(500, 500))
 	a.Show()
 
@@ -195,7 +201,7 @@ func (ui *UI) normalizedHistogram() {
 		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
 		return
 	}
-	a := ui.App.NewWindow(ui.tabs.Selected().Text + "(AccumulativeHistogram)")
+	a := ui.App.NewWindow(ui.tabs.Selected().Text + "(Normalized Histogram)")
 	a.Resize(fyne.NewSize(500, 500))
 	a.Show()
 
