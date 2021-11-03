@@ -57,6 +57,7 @@ func (ui *UI) Init() {
 		fyne.NewMenu("Image",
 			fyne.NewMenuItem("Negative", ui.negativeOp),
 			fyne.NewMenuItem("Monochrome", ui.monochromeOp),
+      fyne.NewMenuItem("Linear Transformation", ui.linearTransformationOp),
 		),
 		fyne.NewMenu("View",
 			fyne.NewMenuItem("Info", ui.infoView),
@@ -132,22 +133,6 @@ func (ui *UI) removeImage(index int, tabItem *container.TabItem) {
 	if len(ui.tabsElements) == 0 {
 		ui.tabs.Hide()
 	}
-}
-
-func (ui *UI) negativeOp() {
-	if ui.tabs.SelectedIndex() == -1 {
-		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
-		return
-	}
-	ui.newImage(ui.tabsElements[ui.tabs.SelectedIndex()].Negative(), ui.tabs.Selected().Text+"(Negative)") // TODO Improve name
-}
-
-func (ui *UI) monochromeOp() {
-	if ui.tabs.SelectedIndex() == -1 {
-		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
-		return
-}
-	ui.newImage(ui.tabsElements[ui.tabs.SelectedIndex()].Monochrome(), ui.tabs.Selected().Text+"(Monochrome)") // TODO Improve name
 }
 
 func (ui *UI) infoView() {
