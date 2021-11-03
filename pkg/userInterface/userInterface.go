@@ -40,6 +40,7 @@ func (ui *UI) Init() {
 		fyne.NewMenu("Image",
 			fyne.NewMenuItem("Negative", ui.negativeOp),
 			fyne.NewMenuItem("Histogram", ui.histogram),
+			fyne.NewMenuItem("Accumulative Histogram", ui.accumulativeHistogram),
 		),
 	)
 
@@ -189,8 +190,6 @@ func (ui *UI) histogram() {
 				YValues: BlueGraph,
 			},
 			chart.ContinuousSeries{
-				XValueFormatter: chart.IntValueFormatter,
-				YValueFormatter: chart.IntValueFormatter,
 				Style: chart.Style{
 					StrokeColor: drawing.Color{
 						R:0,
@@ -217,9 +216,115 @@ func (ui *UI) histogram() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("Final Image: %dx%d\n", image.Bounds().Size().X, image.Bounds().Size().Y)
+	a.SetContent(canvas.NewImageFromImage(image))
+}
 
+func (ui *UI) accumulativeHistogram() {
+	if ui.tabs.SelectedIndex() == -1 {
+		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
+		return
+	}
+	a := ui.App.NewWindow(ui.tabs.Selected().Text + "(AccumulativeHistogram)")
+	a.Resize(fyne.NewSize(500, 500))
+	a.Show()
 
+	var RedGraph []float64
+	var GreenGraph []float64
+	var BlueGraph []float64
 
+	var GrayGraph []float64
+	var indexValues []float64
+
+	for i := 0; i < 256; i++{
+		indexValues = append(indexValues, float64(i))
+		GrayGraph = append(GrayGraph, float64(ui.tabsElements[ui.tabs.SelectedIndex()].HistogramAccumulative.Values[i])) 
+		RedGraph = append(RedGraph, float64(ui.tabsElements[ui.tabs.SelectedIndex()].HistogramAccumulativeR.Values[i]))
+		GreenGraph = append(GreenGraph, float64(ui.tabsElements[ui.tabs.SelectedIndex()].HistogramAccumulativeG.Values[i]))
+		BlueGraph = append(BlueGraph,float64(ui.tabsElements[ui.tabs.SelectedIndex()].HistogramAccumulativeB.Values[i]))
+	}
+	graph := chart.Chart{
+		Series: []chart.Series{
+			chart.ContinuousSeries{
+				Style: chart.Style{
+					StrokeColor: drawing.Color{
+						R:255,
+						G:0,
+						B:0,
+						A:255,
+					},
+					FillColor: drawing.Color{
+						R:255,
+						G:0,
+						B:0,
+						A:127,
+					},
+				},
+				XValues: indexValues,
+				YValues: RedGraph,
+			},
+			chart.ContinuousSeries{
+				Style: chart.Style{
+					StrokeColor: drawing.Color{
+						R:0,
+						G:255,
+						B:0,
+						A:255,
+					},
+					FillColor: drawing.Color{
+						R:0,
+						G:255,
+						B:0,
+						A:127,
+					},
+				},
+				XValues: indexValues,
+				YValues: GreenGraph,
+			},
+			chart.ContinuousSeries{
+				Style: chart.Style{
+					StrokeWidth: 2.0,
+					StrokeColor: drawing.Color{
+						R:0,
+						G:0,
+						B:255,
+						A:255,
+					},
+					FillColor: drawing.Color{
+						R:0,
+						G:0,
+						B:255,
+						A:127,
+					},
+				},
+				XValues: indexValues,
+				YValues: BlueGraph,
+			},
+			chart.ContinuousSeries{
+				Style: chart.Style{
+					StrokeColor: drawing.Color{
+						R:0,
+						G:0,
+						B:0,
+						A:255,
+					},
+					FillColor: drawing.Color{
+						R:0,
+						G:0,
+						B:0,
+						A:127,
+					},
+				},
+				XValues: indexValues,
+				YValues: GrayGraph,
+			},
+		},
+	}
+	collector := &chart.ImageWriter{}
+	graph.Render(chart.PNG, collector)
+
+	image, err := collector.Image()
+	if err != nil {
+		log.Fatal(err)
+	}
 	a.SetContent(canvas.NewImageFromImage(image))
 }
