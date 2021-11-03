@@ -26,9 +26,6 @@ type UI struct {
 func (ui *UI) Init() {
 	ui.tabs = container.NewDocTabs()
 	ui.tabs.Hide()
-  // ui.rect = canvas.NewRectangle(color.Transparent)
-  // ui.rect.StrokeColor = color.White
-  // ui.rect.StrokeWidth = 0.5
 	ui.tabs.CloseIntercept = func(tabItem *container.TabItem) {
 		ui.tabs.Select(tabItem)
 		dialog := dialog.NewConfirm("Close", "Are you sure you want to close "+tabItem.Text+" ?",
@@ -73,29 +70,30 @@ func (ui *UI) openDialog() {
 		if reader == nil {
 			return
 		}
-    img, err := ourimage.NewImage(reader.URI().Path(), ui.label, ui.MainWindow, ui.ROIcallback)
+		img, err := ourimage.NewFromPath(reader.URI().Path(), reader.URI().Name(),
+      ui.label, ui.MainWindow, ui.ROIcallback)
 		if err != nil {
 			dialog.ShowError(err, ui.MainWindow)
 		}
-		ui.newImage(img, reader.URI().Name())
+		ui.newImage(img)
 	}, ui.MainWindow)
 	dialog.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpeg", ".jpg", ".tfe"}))
 	dialog.Show()
 }
 
 func (ui *UI) ROIcallback(cropped *ourimage.OurImage) {
-  dialog.ShowCustomConfirm("Do you want this sub-image?", "Ok", "Cancel", container.NewCenter(cropped), 
-    func(choice bool){
-      if !choice {
-        return
-      }
-      ui.newImage(cropped, "pepe")
-    },
-    ui.MainWindow)
+	dialog.ShowCustomConfirm("Do you want this sub-image?", "Ok", "Cancel", container.NewCenter(cropped),
+		func(choice bool) {
+			if !choice {
+				return
+			}
+      ui.newImage(cropped)
+		},
+		ui.MainWindow)
 }
 
-func (ui *UI) newImage(img *ourimage.OurImage, name string) {
-  ui.tabs.Append(container.NewTabItem(name, container.NewScroll(container.New(layout.NewCenterLayout(), img))))
+func (ui *UI) newImage(img *ourimage.OurImage) {
+	ui.tabs.Append(container.NewTabItem(img.Name(), container.NewScroll(container.New(layout.NewCenterLayout(), img))))
 	ui.tabs.SelectIndex(len(ui.tabs.Items) - 1) // Select the last one
 	ui.tabsElements = append(ui.tabsElements, img)
 	if len(ui.tabsElements) != 0 {
@@ -117,7 +115,7 @@ func (ui *UI) negativeOp() {
 		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
 		return
 	}
-	ui.newImage(ui.tabsElements[ui.tabs.SelectedIndex()].Negative(), ui.tabs.Selected().Text+"(Negative)") // TODO Improve name
+	ui.newImage(ui.tabsElements[ui.tabs.SelectedIndex()].Negative()) // TODO Improve name
 }
 
 func (ui *UI) monochromeOp() {
@@ -125,7 +123,7 @@ func (ui *UI) monochromeOp() {
 		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
 		return
 	}
-	ui.newImage(ui.tabsElements[ui.tabs.SelectedIndex()].Monochrome(), ui.tabs.Selected().Text+"(Monochrome)") // TODO Improve name
+	ui.newImage(ui.tabsElements[ui.tabs.SelectedIndex()].Monochrome()) // TODO Improve name
 }
 
 func (ui *UI) infoView() {
