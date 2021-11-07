@@ -25,6 +25,7 @@ type OurImage struct {
 	name        string
 	canvasImage *canvas.Image
 	format      string
+  brightness int
 	statusBar   *widget.Label
 	mainWindow  fyne.Window
 	rectangle   image.Rectangle
@@ -134,6 +135,8 @@ func NewFromPath(path, name string, statusBar *widget.Label, w fyne.Window, ROIc
 
 	makeHistogram(img)
 
+  img.brightness = img.calculateBrightness()
+  fmt.Println(img.brightness)
 	return img, nil
 }
 
@@ -148,6 +151,7 @@ func (ourImage *OurImage) newFromImage(newImage image.Image, actionForName strin
 	img.canvasImage = canvas.NewImageFromImage(newImage)
 	img.canvasImage.FillMode = canvas.ImageFillOriginal
 	makeHistogram(img)
+  img.brightness = img.calculateBrightness()
 	return img
 }
 
@@ -169,6 +173,7 @@ func (img OurImage) Save(file *os.File, format string) error {
 	return fmt.Errorf("Incorrrect format")
 }
 
+// getters
 func (img OurImage) Name() string {
 	return img.name
 }
@@ -181,7 +186,19 @@ func (img OurImage) Dimensions() image.Point {
 	return img.canvasImage.Image.Bounds().Size()
 }
 
+func (img OurImage) Brightness() int {
+  return img.brightness
+}
+// end getters
+
 // Functions
+func (ourimage OurImage) calculateBrightness() (value int) {
+  for i := 0; i < 255; i++ {
+    value += ourimage.Histogram.Values[i]
+  }
+  return value/256
+}
+
 func (originalImg *OurImage) Negative() *OurImage {
 	b := originalImg.canvasImage.Image.Bounds()
 	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))

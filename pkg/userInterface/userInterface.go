@@ -5,6 +5,7 @@ import (
 	"image"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 
 	"fyne.io/fyne/v2"
@@ -76,7 +77,7 @@ func (ui *UI) Init() {
 
 func (ui UI) getCurrentImage() (*ourimage.OurImage, error) {
 	if ui.tabs.SelectedIndex() == -1 {
-		return nil, fmt.Errorf("No image selected")
+		return nil, fmt.Errorf("no image selected")
 	}
 	return ui.tabsElements[ui.tabs.SelectedIndex()], nil
 }
@@ -174,13 +175,15 @@ func (ui *UI) removeImage(index int, tabItem *container.TabItem) {
 }
 
 func (ui *UI) infoView() {
-	if ui.tabs.SelectedIndex() == -1 {
-		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
+  currentImage, err := ui.getCurrentImage()
+  if err != nil {
+    dialog.ShowError(err, ui.MainWindow)
 		return
-	}
-	format := ui.tabsElements[ui.tabs.SelectedIndex()].Format()
-	size := ui.tabsElements[ui.tabs.SelectedIndex()].Dimensions()
-	message := fmt.Sprintf("Format: %v\n Size: %v bytes (%v x %v)", format, humanize.Bytes(uint64(size.X*size.Y)), size.X, size.Y)
+  }
+	format := currentImage.Format()
+	size := currentImage.Dimensions()
+	message := fmt.Sprintf("Format: %v\n Size: %v bytes (%v x %v)\n", format, humanize.Bytes(uint64(size.X*size.Y)), size.X, size.Y)
+  message += "Brightness: " + strconv.Itoa(currentImage.Brightness())
 	dialog := dialog.NewInformation("Information", message, ui.MainWindow)
 	dialog.Show()
 }
