@@ -29,6 +29,7 @@ type OurImage struct {
 	mainWindow  fyne.Window
 	rectangle   image.Rectangle
 	ROIcallback func(*OurImage)
+  newImageCallback func(*OurImage)
 
 	HistogramR histogram.Histogram
 	HistogramG histogram.Histogram
@@ -46,6 +47,7 @@ type OurImage struct {
 	HistogramNormalized  histogram.HistogramNormalized
 }
 
+// Events //
 func (self *OurImage) MouseIn(mouse *desktop.MouseEvent) {
 	if self.statusBar != nil {
 		r, g, b, a := self.canvasImage.Image.At(int(mouse.Position.X), int(mouse.Position.Y)).RGBA()
@@ -70,7 +72,20 @@ func (ourimage *OurImage) MouseOut() {
 
 // desktop.Mouseable
 func (ourimage *OurImage) MouseDown(mouseEvent *desktop.MouseEvent) {
-	ourimage.rectangle.Min = image.Pt(int(math.Round(float64(mouseEvent.Position.X))), int(math.Round(float64(mouseEvent.Position.Y))))
+	if mouseEvent.Button == desktop.MouseButtonSecondary {
+		popUp := widget.NewPopUpMenu(
+			fyne.NewMenu("PopUp",
+        fyne.NewMenuItem("Duplicate", 
+          func() {
+            ourimage.newImageCallback(ourimage) // TODO am I really duplicating the image?
+          },
+        ),
+			),
+			ourimage.mainWindow.Canvas(),
+		)
+		popUp.ShowAtPosition(mouseEvent.AbsolutePosition)
+	}
+  ourimage.rectangle.Min = image.Pt(int(math.Round(float64(mouseEvent.Position.X))), int(math.Round(float64(mouseEvent.Position.Y))))
 }
 
 func (ourimage *OurImage) MouseUp(mouseEvent *desktop.MouseEvent) {
@@ -79,17 +94,19 @@ func (ourimage *OurImage) MouseUp(mouseEvent *desktop.MouseEvent) {
 		ourimage.ROIcallback(ourimage.ROI(ourimage.rectangle))
 	}
 }
+// end Events //
 
 func (self *OurImage) CreateRenderer() fyne.WidgetRenderer {
 	return widget.NewSimpleRenderer(self.canvasImage)
 }
 
-func NewFromPath(path, name string, statusBar *widget.Label, w fyne.Window, ROIcallback func(*OurImage)) (*OurImage, error) {
+func NewFromPath(path, name string, statusBar *widget.Label, w fyne.Window, ROIcallback, newImageCallback func(*OurImage)) (*OurImage, error) {
 	img := &OurImage{}
 	img.name = name
 	img.statusBar = statusBar
 	img.mainWindow = w
 	img.ROIcallback = ROIcallback
+  img.newImageCallback = newImageCallback
 	img.ExtendBaseWidget(img)
 	f, err := os.Open(path)
 	if err != nil {
@@ -120,6 +137,20 @@ func NewFromPath(path, name string, statusBar *widget.Label, w fyne.Window, ROIc
 	return img, nil
 }
 
+func (ourImage *OurImage) newFromImage(newImage image.Image, actionForName string) *OurImage {
+	img := &OurImage{}
+	img.name = ourImage.addOperationToName(actionForName)
+	img.statusBar = ourImage.statusBar
+	img.mainWindow = ourImage.mainWindow
+	img.ROIcallback = ourImage.ROIcallback
+  img.newImageCallback = ourImage.newImageCallback
+	img.ExtendBaseWidget(img)
+	img.canvasImage = canvas.NewImageFromImage(newImage)
+	img.canvasImage.FillMode = canvas.ImageFillOriginal
+	makeHistogram(img)
+	return img
+}
+
 func (img OurImage) addOperationToName(actionForName string) string {
 	actionForName = "(" + actionForName + ")"
 	pointIndex := strings.LastIndex(img.name, ".")
@@ -127,19 +158,6 @@ func (img OurImage) addOperationToName(actionForName string) string {
 		return img.name + actionForName
 	}
 	return img.name[:pointIndex] + actionForName + img.name[pointIndex:]
-}
-
-func newFromImage(ourImage *OurImage, newImage image.Image, actionForName string) *OurImage {
-	img := &OurImage{}
-	img.name = ourImage.addOperationToName(actionForName)
-	img.statusBar = ourImage.statusBar
-	img.mainWindow = ourImage.mainWindow
-	img.ROIcallback = ourImage.ROIcallback
-	img.ExtendBaseWidget(img)
-	img.canvasImage = canvas.NewImageFromImage(newImage)
-	img.canvasImage.FillMode = canvas.ImageFillOriginal
-	makeHistogram(img)
-	return img
 }
 
 func (img OurImage) Save(file *os.File, format string) error {
@@ -164,7 +182,7 @@ func (img OurImage) Dimensions() image.Point {
 }
 
 // Functions
-func (originalImg *OurImage) Negative() *OurImage { // TODO it makes a copy
+func (originalImg *OurImage) Negative() *OurImage {
 	b := originalImg.canvasImage.Image.Bounds()
 	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
 
@@ -174,10 +192,10 @@ func (originalImg *OurImage) Negative() *OurImage { // TODO it makes a copy
 			NewImage.Set(x, y, lookUpTable.RGBA(oldColour, lookUpTable.Negative))
 		}
 	}
-	return newFromImage(originalImg, NewImage, "Negative")
+	return originalImg.newFromImage(NewImage, "Negative")
 }
 
-func (originalImg *OurImage) Monochrome() *OurImage { // TODO it makes a copy
+func (originalImg *OurImage) Monochrome() *OurImage {
 	b := originalImg.canvasImage.Image.Bounds()
 	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
 
@@ -188,7 +206,7 @@ func (originalImg *OurImage) Monochrome() *OurImage { // TODO it makes a copy
 			NewImage.Set(x, y, color.Gray{Y: uint8(0.222*float32(r>>8) + 0.707*float32(g>>8) + 0.071*float32(b>>8))}) // PAL
 		}
 	}
-	return newFromImage(originalImg, NewImage, "Monochrome")
+	return originalImg.newFromImage(NewImage, "Monochrome")
 }
 
 func (originalImg *OurImage) ROI(rect image.Rectangle) *OurImage {
@@ -199,7 +217,7 @@ func (originalImg *OurImage) ROI(rect image.Rectangle) *OurImage {
 			NewImage.Set(x, y, originalImg.canvasImage.Image.At(x+rect.Min.X, y+rect.Min.Y))
 		}
 	}
-	return newFromImage(originalImg, NewImage, "ROI")
+	return originalImg.newFromImage(NewImage, "ROI")
 }
 
 func makeHistogram(image *OurImage) {

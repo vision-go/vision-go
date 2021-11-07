@@ -91,7 +91,7 @@ func (ui *UI) openDialog() {
 			return
 		}
 		img, err := ourimage.NewFromPath(reader.URI().Path(), reader.URI().Name(),
-			ui.label, ui.MainWindow, ui.ROIcallback)
+      ui.label, ui.MainWindow, ui.ROIcallback, ui.newImage)
 		if err != nil {
 			dialog.ShowError(err, ui.MainWindow)
 		}
@@ -106,14 +106,6 @@ func (ui *UI) saveAsDialog() {
 		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
 		return
 	}
-	formatName := func(originalName, format string) string {
-		pointIndex := strings.LastIndex(originalName, ".")
-		if pointIndex == -1 {
-			return originalName + "." + format
-		}
-		return originalName[:pointIndex+1] + format
-	}
-
 	selectionWidget := widget.NewRadioGroup([]string{"png", "jpg"}, func(string) {})
 	selectionWidget.SetSelected("png")
 	dialog.ShowCustomConfirm("Select format", "Ok", "Cancel", selectionWidget,
@@ -140,7 +132,14 @@ func (ui *UI) saveAsDialog() {
 					dialog.ShowError(err, ui.MainWindow)
 				}
 			}, ui.MainWindow)
-			dialog.SetFileName(formatName(ui.tabs.Selected().Text, selectionWidget.Selected))
+			formatedName := func(originalName, format string) string {
+				pointIndex := strings.LastIndex(originalName, ".")
+				if pointIndex == -1 {
+					return originalName + "." + format
+				}
+				return originalName[:pointIndex+1] + format
+			}(ui.tabs.Selected().Text, selectionWidget.Selected)
+			dialog.SetFileName(formatedName)
 			dialog.Show()
 		},
 		ui.MainWindow)
@@ -175,6 +174,10 @@ func (ui *UI) removeImage(index int, tabItem *container.TabItem) {
 }
 
 func (ui *UI) infoView() {
+	if ui.tabs.SelectedIndex() == -1 {
+		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
+		return
+	}
 	format := ui.tabsElements[ui.tabs.SelectedIndex()].Format()
 	size := ui.tabsElements[ui.tabs.SelectedIndex()].Dimensions()
 	message := fmt.Sprintf("Format: %v\n Size: %v bytes (%v x %v)", format, humanize.Bytes(uint64(size.X*size.Y)), size.X, size.Y)

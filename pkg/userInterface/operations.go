@@ -16,7 +16,7 @@ func (ui *UI) negativeOp() {
 		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
 		return
 	}
-	ui.newImage(ui.tabsElements[ui.tabs.SelectedIndex()].Negative()) // TODO Improve name
+	ui.newImage(ui.tabsElements[ui.tabs.SelectedIndex()].Negative())
 }
 
 func (ui *UI) monochromeOp() {
@@ -24,7 +24,7 @@ func (ui *UI) monochromeOp() {
 		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
 		return
 	}
-	ui.newImage(ui.tabsElements[ui.tabs.SelectedIndex()].Monochrome()) // TODO Improve name
+	ui.newImage(ui.tabsElements[ui.tabs.SelectedIndex()].Monochrome())
 }
 
 // Linear transformation operation
