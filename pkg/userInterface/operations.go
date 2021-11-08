@@ -11,6 +11,14 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+func (ui *UI) equializationOp() {
+	if ui.tabs.SelectedIndex() == -1 {
+		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
+		return
+	}
+	ui.newImage(ui.tabsElements[ui.tabs.SelectedIndex()].Equalization()) // TODO Improve name
+}
+
 func (ui *UI) negativeOp() {
 	if ui.tabs.SelectedIndex() == -1 {
 		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
@@ -122,3 +130,9 @@ func (ui *UI) linearTransformationOp() {
 			ui.MainWindow)
 	}
 }
+
+
+
+
+
+

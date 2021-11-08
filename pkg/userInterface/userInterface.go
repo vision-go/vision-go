@@ -66,6 +66,11 @@ func (ui *UI) Init() {
 			fyne.NewMenuItem("Accumulative Histogram", ui.accumulativeHistogram),
 			fyne.NewMenuItem("Normalized Histogram", ui.normalizedHistogram),
 		),
+		fyne.NewMenu("No Linear Transformations",
+		fyne.NewMenuItem("Equalization", ui.equializationOp),
+		fyne.NewMenuItem("Monochrome", ui.monochromeOp),
+		fyne.NewMenuItem("Linear Transformation", ui.linearTransformationOp),
+	),
 	)
 
 	ui.MainWindow.SetMainMenu(ui.menu)

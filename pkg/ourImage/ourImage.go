@@ -221,16 +221,16 @@ func makeHistogram(image *OurImage) {
 	}
 	for i := 0; i < image.canvasImage.Image.Bounds().Dx(); i++ {
 		for j := 0; j < image.canvasImage.Image.Bounds().Dy(); j++ {
-			r, g, b, a := image.canvasImage.Image.At(i, j).RGBA()
-			if a != 0 {
+			r, g, b, _ := image.canvasImage.Image.At(i, j).RGBA()
+			
 				r, g, b = r>>8, g>>8, b>>8
 				image.HistogramR.Values[r] = image.HistogramR.At(int(r)) + 1
-				image.HistogramG.Values[g] = image.HistogramG.At(int(r)) + 1
-				image.HistogramB.Values[b] = image.HistogramG.At(int(r)) + 1
+				image.HistogramG.Values[g] = image.HistogramG.At(int(g)) + 1
+				image.HistogramB.Values[b] = image.HistogramG.At(int(b)) + 1
 
 				grey := 0.222*float64(r) + 0.707*float64(g) + 0.071*float64(b) // PAL
 				image.Histogram.Values[int(math.Round(grey))] = image.Histogram.At(int(math.Round(grey))) + 1
-			}
+			
 		}
 	}
 	for index := range image.Histogram.Values {
@@ -248,4 +248,47 @@ func makeHistogram(image *OurImage) {
 		image.HistogramNormalizedB.Values[i] = float64(image.HistogramB.Values[i]) / float64(image.canvasImage.Image.Bounds().Dx()*image.canvasImage.Image.Bounds().Dy())
 	}
 
+
+}
+
+func (originalImg *OurImage) Equalization() *OurImage { // TODO it makes a copy
+	b := originalImg.canvasImage.Image.Bounds()
+	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
+	size := b.Dx() * b.Dy()
+	var lookUpTableArrayR [256]int
+	var lookUpTableArrayG [256]int
+	var lookUpTableArrayB [256]int
+
+	
+	for i := 0; i < 256; i++{
+		lookUpTableArrayR[i] = Max(0,int(math.Round((float64(originalImg.HistogramAccumulativeR.At(i)*256)/float64(size))-1)))
+		lookUpTableArrayG[i] = Max(0,int(math.Round((float64(originalImg.HistogramAccumulativeG.At(i)*256)/float64(size))-1)))
+		lookUpTableArrayB[i] = Max(0,int(math.Round((float64(originalImg.HistogramAccumulativeB.At(i)*256)/float64(size))-1)))
+	}
+	fmt.Println(lookUpTableArrayR,lookUpTableArrayG,lookUpTableArrayB)
+
+
+	for y := 0; y < originalImg.canvasImage.Image.Bounds().Dy(); y++ {
+		for x := 0; x < originalImg.canvasImage.Image.Bounds().Dx(); x++ {
+			oldColour := originalImg.canvasImage.Image.At(x, y)
+			r,g,b,a := oldColour.RGBA()
+			r,g,b = r >> 8, g >> 8, b >> 8
+			
+			newColor := color.RGBA{
+				R: uint8(lookUpTableArrayR[r]),
+				G: uint8(lookUpTableArrayG[g]),
+				B: uint8(lookUpTableArrayB[b]),
+				A: uint8(a),
+			}
+			NewImage.Set(x, y, newColor)
+		}
+	}
+	return  newFromImage(originalImg, NewImage, "Ecualization")
+}
+
+func Max(x, y int) int {
+	if x < y {
+			return y
+	}
+	return x
 }
