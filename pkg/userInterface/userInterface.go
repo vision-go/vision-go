@@ -92,7 +92,7 @@ func (ui *UI) openDialog() {
 			return
 		}
 		img, err := ourimage.NewFromPath(reader.URI().Path(), reader.URI().Name(),
-      ui.label, ui.MainWindow, ui.ROIcallback, ui.newImage)
+			ui.label, ui.MainWindow, ui.ROIcallback, ui.newImage)
 		if err != nil {
 			dialog.ShowError(err, ui.MainWindow)
 		}
@@ -175,15 +175,18 @@ func (ui *UI) removeImage(index int, tabItem *container.TabItem) {
 }
 
 func (ui *UI) infoView() {
-  currentImage, err := ui.getCurrentImage()
-  if err != nil {
-    dialog.ShowError(err, ui.MainWindow)
+	currentImage, err := ui.getCurrentImage()
+	if err != nil {
+		dialog.ShowError(err, ui.MainWindow)
 		return
-  }
+	}
 	format := currentImage.Format()
 	size := currentImage.Dimensions()
 	message := fmt.Sprintf("Format: %v\n Size: %v bytes (%v x %v)\n", format, humanize.Bytes(uint64(size.X*size.Y)), size.X, size.Y)
-  message += "Brightness: " + strconv.Itoa(currentImage.Brightness())
+	message += "Brightness: " + strconv.Itoa(currentImage.Brightness())
+	message += "\nContrass: " + fmt.Sprintf("%f", currentImage.Contrass())
+	entropy, numberOfColors := currentImage.EntropyAndNumberOfColors()
+	message += "\nEntropy: " + strconv.Itoa(entropy) + " with " + strconv.Itoa(numberOfColors) + " diferent colors"
 	dialog := dialog.NewInformation("Information", message, ui.MainWindow)
 	dialog.Show()
 }

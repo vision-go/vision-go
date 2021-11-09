@@ -22,15 +22,19 @@ import (
 
 type OurImage struct {
 	widget.BaseWidget
-	name        string
-	canvasImage *canvas.Image
-	format      string
-  brightness int
-	statusBar   *widget.Label
-	mainWindow  fyne.Window
-	rectangle   image.Rectangle
-	ROIcallback func(*OurImage)
-  newImageCallback func(*OurImage)
+	name             string
+	canvasImage      *canvas.Image
+	format           string
+	brightness       int
+	contrass         float64
+	entropy          int
+	numberOfColors   int
+  size int
+	statusBar        *widget.Label
+	mainWindow       fyne.Window
+	rectangle        image.Rectangle
+	ROIcallback      func(*OurImage)
+	newImageCallback func(*OurImage)
 
 	HistogramR histogram.Histogram
 	HistogramG histogram.Histogram
@@ -76,17 +80,17 @@ func (ourimage *OurImage) MouseDown(mouseEvent *desktop.MouseEvent) {
 	if mouseEvent.Button == desktop.MouseButtonSecondary {
 		popUp := widget.NewPopUpMenu(
 			fyne.NewMenu("PopUp",
-        fyne.NewMenuItem("Duplicate", 
-          func() {
-            ourimage.newImageCallback(ourimage) // TODO am I really duplicating the image?
-          },
-        ),
+				fyne.NewMenuItem("Duplicate",
+					func() {
+						ourimage.newImageCallback(ourimage) // TODO am I really duplicating the image?
+					},
+				),
 			),
 			ourimage.mainWindow.Canvas(),
 		)
 		popUp.ShowAtPosition(mouseEvent.AbsolutePosition)
 	}
-  ourimage.rectangle.Min = image.Pt(int(math.Round(float64(mouseEvent.Position.X))), int(math.Round(float64(mouseEvent.Position.Y))))
+	ourimage.rectangle.Min = image.Pt(int(math.Round(float64(mouseEvent.Position.X))), int(math.Round(float64(mouseEvent.Position.Y))))
 }
 
 func (ourimage *OurImage) MouseUp(mouseEvent *desktop.MouseEvent) {
@@ -95,6 +99,7 @@ func (ourimage *OurImage) MouseUp(mouseEvent *desktop.MouseEvent) {
 		ourimage.ROIcallback(ourimage.ROI(ourimage.rectangle))
 	}
 }
+
 // end Events //
 
 func (self *OurImage) CreateRenderer() fyne.WidgetRenderer {
@@ -107,7 +112,7 @@ func NewFromPath(path, name string, statusBar *widget.Label, w fyne.Window, ROIc
 	img.statusBar = statusBar
 	img.mainWindow = w
 	img.ROIcallback = ROIcallback
-  img.newImageCallback = newImageCallback
+	img.newImageCallback = newImageCallback
 	img.ExtendBaseWidget(img)
 	f, err := os.Open(path)
 	if err != nil {
@@ -133,10 +138,12 @@ func NewFromPath(path, name string, statusBar *widget.Label, w fyne.Window, ROIc
 	img.canvasImage = canvas.NewImageFromImage(inputImg)
 	img.canvasImage.FillMode = canvas.ImageFillOriginal
 
+  img.size = img.canvasImage.Image.Bounds().Dx() * img.canvasImage.Image.Bounds().Dy()
 	makeHistogram(img)
 
-  img.brightness = img.calculateBrightness()
-  fmt.Println(img.brightness)
+	img.brightness = img.calculateBrightness()
+	img.contrass = img.calculateContrass()
+	img.entropy, img.numberOfColors = img.calculateEntropyAndNumberOfColors()
 	return img, nil
 }
 
@@ -146,12 +153,15 @@ func (ourImage *OurImage) newFromImage(newImage image.Image, actionForName strin
 	img.statusBar = ourImage.statusBar
 	img.mainWindow = ourImage.mainWindow
 	img.ROIcallback = ourImage.ROIcallback
-  img.newImageCallback = ourImage.newImageCallback
+	img.newImageCallback = ourImage.newImageCallback
 	img.ExtendBaseWidget(img)
 	img.canvasImage = canvas.NewImageFromImage(newImage)
 	img.canvasImage.FillMode = canvas.ImageFillOriginal
+  img.size = img.canvasImage.Image.Bounds().Dx() * img.canvasImage.Image.Bounds().Dy()
 	makeHistogram(img)
-  img.brightness = img.calculateBrightness()
+	img.brightness = img.calculateBrightness()
+	img.contrass = img.calculateContrass()
+	img.entropy, img.numberOfColors = img.calculateEntropyAndNumberOfColors()
 	return img
 }
 
@@ -187,16 +197,49 @@ func (img OurImage) Dimensions() image.Point {
 }
 
 func (img OurImage) Brightness() int {
-  return img.brightness
+	return img.brightness
 }
+
+func (img OurImage) Contrass() float64 {
+	return img.contrass
+}
+
+func (img OurImage) EntropyAndNumberOfColors() (int, int) {
+	return img.entropy, img.numberOfColors
+}
+
 // end getters
 
 // Functions
 func (ourimage OurImage) calculateBrightness() (value int) {
-  for i := 0; i < 255; i++ {
-    value += ourimage.Histogram.Values[i]
+	for color, count := range ourimage.Histogram.Values {
+		value += color * count
+	}
+	return value / ourimage.size
+}
+
+func (ourimage OurImage) calculateContrass() (value float64) {
+	for _, count := range ourimage.Histogram.Values {
+		value += float64(count-ourimage.brightness) * float64(count-ourimage.brightness)
+	}
+  return math.Sqrt(value / float64(ourimage.size))
+}
+
+func (ourimage OurImage) calculateEntropyAndNumberOfColors() (int, int) {
+	var sum float64
+	var numberOfColors int
+  for _, count := range(ourimage.Histogram.Values) {
+    if count != 0 {
+      numberOfColors++
+    }
   }
-  return value/256
+	for _, count := range(ourimage.Histogram.Values) {
+		if count != 0 {
+      probability := 1 / float64(numberOfColors)
+      sum += probability * math.Log2(probability)
+		}
+	}
+	return int(math.Ceil(sum * -1)), numberOfColors
 }
 
 func (originalImg *OurImage) Negative() *OurImage {
