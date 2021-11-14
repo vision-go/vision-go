@@ -8,12 +8,10 @@ import (
 	"image/png"
 	"math"
 	"os"
-	"strconv"
 	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
-	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/widget"
 
 	histogram "github.com/vision-go/vision-go/pkg/histogram"
@@ -25,10 +23,11 @@ type OurImage struct {
 	name             string
 	canvasImage      *canvas.Image
 	format           string
-	brightness       int
-	contrass         float64
+	brightness       float64
+	contrast         float64
 	entropy          int
 	numberOfColors   int
+  minColor, maxColor int
   size int
 	statusBar        *widget.Label
 	mainWindow       fyne.Window
@@ -51,56 +50,6 @@ type OurImage struct {
 	HistogramNormalizedB histogram.HistogramNormalized
 	HistogramNormalized  histogram.HistogramNormalized
 }
-
-// Events //
-func (self *OurImage) MouseIn(mouse *desktop.MouseEvent) {
-	if self.statusBar != nil {
-		r, g, b, a := self.canvasImage.Image.At(int(mouse.Position.X), int(mouse.Position.Y)).RGBA()
-		self.statusBar.SetText("R: " + strconv.Itoa(int(r>>8)) + " || G: " + strconv.Itoa(int(g>>8)) + " || B: " + strconv.Itoa(int(b>>8)) + " || A: " + strconv.Itoa(int(a>>8)))
-	}
-}
-
-// MouseMoved is a hook that is called if the mouse pointer moved over the element.
-func (self *OurImage) MouseMoved(mouse *desktop.MouseEvent) {
-	if self.statusBar != nil {
-		r, g, b, a := self.canvasImage.Image.At(int(mouse.Position.X), int(mouse.Position.Y)).RGBA()
-		self.statusBar.SetText("R: " + strconv.Itoa(int(r>>8)) + " || G: " + strconv.Itoa(int(g>>8)) + " || B: " + strconv.Itoa(int(b>>8)) + " || A: " + strconv.Itoa(int(a>>8)))
-	}
-}
-
-// MouseOut is a hook that is called if the mouse pointer leaves the element.
-func (ourimage *OurImage) MouseOut() {
-	if ourimage.statusBar != nil {
-		ourimage.statusBar.SetText("")
-	}
-}
-
-// desktop.Mouseable
-func (ourimage *OurImage) MouseDown(mouseEvent *desktop.MouseEvent) {
-	if mouseEvent.Button == desktop.MouseButtonSecondary {
-		popUp := widget.NewPopUpMenu(
-			fyne.NewMenu("PopUp",
-				fyne.NewMenuItem("Duplicate",
-					func() {
-						ourimage.newImageCallback(ourimage) // TODO am I really duplicating the image?
-					},
-				),
-			),
-			ourimage.mainWindow.Canvas(),
-		)
-		popUp.ShowAtPosition(mouseEvent.AbsolutePosition)
-	}
-	ourimage.rectangle.Min = image.Pt(int(math.Round(float64(mouseEvent.Position.X))), int(math.Round(float64(mouseEvent.Position.Y))))
-}
-
-func (ourimage *OurImage) MouseUp(mouseEvent *desktop.MouseEvent) {
-	ourimage.rectangle.Max = image.Pt(int(math.Round(float64(mouseEvent.Position.X))), int(math.Round(float64(mouseEvent.Position.Y))))
-	if ourimage.rectangle.Dx() > 10 && ourimage.rectangle.Dy() > 10 {
-		ourimage.ROIcallback(ourimage.ROI(ourimage.rectangle))
-	}
-}
-
-// end Events //
 
 func (self *OurImage) CreateRenderer() fyne.WidgetRenderer {
 	return widget.NewSimpleRenderer(self.canvasImage)
@@ -140,12 +89,13 @@ func NewFromPath(path, name string, statusBar *widget.Label, w fyne.Window, ROIc
 
   img.size = img.canvasImage.Image.Bounds().Dx() * img.canvasImage.Image.Bounds().Dy()
 	makeHistogram(img)
-
+  img.minColor, img.maxColor = img.calculateMinAndMaxColor()
 	img.brightness = img.calculateBrightness()
-	img.contrass = img.calculateContrass()
+	img.contrast = img.calculateContrast(img.brightness)
 	img.entropy, img.numberOfColors = img.calculateEntropyAndNumberOfColors()
 	return img, nil
 }
+
 
 func (ourImage *OurImage) newFromImage(newImage image.Image, actionForName string) *OurImage {
 	img := &OurImage{}
@@ -159,13 +109,17 @@ func (ourImage *OurImage) newFromImage(newImage image.Image, actionForName strin
 	img.canvasImage.FillMode = canvas.ImageFillOriginal
   img.size = img.canvasImage.Image.Bounds().Dx() * img.canvasImage.Image.Bounds().Dy()
 	makeHistogram(img)
+  img.minColor, img.maxColor = img.calculateMinAndMaxColor()
 	img.brightness = img.calculateBrightness()
-	img.contrass = img.calculateContrass()
+	img.contrast = img.calculateContrast(img.brightness)
 	img.entropy, img.numberOfColors = img.calculateEntropyAndNumberOfColors()
 	return img
 }
 
-func (img OurImage) addOperationToName(actionForName string) string {
+func (img *OurImage) addOperationToName(actionForName string) string {
+  if actionForName == "" {
+    return img.name
+  }
 	actionForName = "(" + actionForName + ")"
 	pointIndex := strings.LastIndex(img.name, ".")
 	if pointIndex == -1 {
@@ -174,7 +128,7 @@ func (img OurImage) addOperationToName(actionForName string) string {
 	return img.name[:pointIndex] + actionForName + img.name[pointIndex:]
 }
 
-func (img OurImage) Save(file *os.File, format string) error {
+func (img *OurImage) Save(file *os.File, format string) error {
 	if format == "png" {
 		return png.Encode(file, img.canvasImage.Image)
 	} else if format == "jpeg" || format == "jpg" {
@@ -183,49 +137,37 @@ func (img OurImage) Save(file *os.File, format string) error {
 	return fmt.Errorf("Incorrrect format")
 }
 
-// getters
-func (img OurImage) Name() string {
-	return img.name
-}
-
-func (img OurImage) Format() string {
-	return img.format
-}
-
-func (img OurImage) Dimensions() image.Point {
-	return img.canvasImage.Image.Bounds().Size()
-}
-
-func (img OurImage) Brightness() int {
-	return img.brightness
-}
-
-func (img OurImage) Contrass() float64 {
-	return img.contrass
-}
-
-func (img OurImage) EntropyAndNumberOfColors() (int, int) {
-	return img.entropy, img.numberOfColors
-}
-
-// end getters
-
 // Functions
-func (ourimage OurImage) calculateBrightness() (value int) {
+func (ourimage *OurImage) calculateBrightness() (value float64) {
 	for color, count := range ourimage.Histogram.Values {
-		value += color * count
+		value += float64(color * count)
 	}
-	return value / ourimage.size
+	return value / float64(ourimage.size)
 }
 
-func (ourimage OurImage) calculateContrass() (value float64) {
+func (ourimage *OurImage) calculateContrast(brightness float64) (value float64) {
 	for _, count := range ourimage.Histogram.Values {
-		value += float64(count-ourimage.brightness) * float64(count-ourimage.brightness)
+		value += (float64(count)-brightness) * (float64(count)-brightness)
 	}
   return math.Sqrt(value / float64(ourimage.size))
 }
 
-func (ourimage OurImage) calculateEntropyAndNumberOfColors() (int, int) {
+func (ourimage *OurImage) calculateMinAndMaxColor() (min, max int) {
+  for color, count := range ourimage.Histogram.Values {
+    if count != 0 {
+      min = color
+      break
+    }
+  }
+  for max = ourimage.Histogram.Len(); max > 0; max-- {
+    if ourimage.Histogram.At(max) != 0 {
+      break
+    }
+  }
+  return
+}
+
+func (ourimage *OurImage) calculateEntropyAndNumberOfColors() (int, int) {
 	var sum float64
 	var numberOfColors int
   for _, count := range(ourimage.Histogram.Values) {
@@ -278,6 +220,34 @@ func (originalImg *OurImage) ROI(rect image.Rectangle) *OurImage {
 		}
 	}
 	return originalImg.newFromImage(NewImage, "ROI")
+}
+
+func (originalImg *OurImage) BrightnessAndContrast(brightness, contrast float64) *OurImage {
+	b := originalImg.canvasImage.Image.Bounds()
+	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
+
+  A := contrast / originalImg.contrast
+  B := brightness - A * originalImg.brightness
+  localLookUpTable := make([]color.Gray, 256)
+  for colour := range localLookUpTable {
+    vOut := A*float64(colour)+B
+    if vOut > 255 {
+      localLookUpTable[colour] = color.Gray{255}
+    } else if vOut < 0 {
+      localLookUpTable[colour] = color.Gray{0}
+    } else {
+      localLookUpTable[colour] = color.Gray{uint8(A*float64(colour)+B)}
+    }
+  }
+  for x := 0; x < originalImg.canvasImage.Image.Bounds().Dx(); x++ {
+    for y := 0; y < originalImg.canvasImage.Image.Bounds().Dy(); y++ {
+			r, g, b, a := originalImg.canvasImage.Image.At(x, y).RGBA()
+      r, g, b = r>>8, g>>8, b>>8
+      NewImage.Set(x, y, color.RGBA{R:localLookUpTable[r].Y,
+        G:localLookUpTable[g].Y, B:localLookUpTable[b].Y, A:uint8(a)})
+		}
+	}
+	return originalImg.newFromImage(NewImage, "B/C")
 }
 
 func makeHistogram(image *OurImage) {

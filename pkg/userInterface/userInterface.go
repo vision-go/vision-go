@@ -59,6 +59,7 @@ func (ui *UI) Init() {
 		fyne.NewMenu("Image",
 			fyne.NewMenuItem("Negative", ui.negativeOp),
 			fyne.NewMenuItem("Monochrome", ui.monochromeOp),
+			fyne.NewMenuItem("Adjust Brightness/Contrast", ui.adjustBrightnessAndContrast),
 			fyne.NewMenuItem("Linear Transformation", ui.linearTransformationOp),
 		),
 		fyne.NewMenu("View",
@@ -75,7 +76,7 @@ func (ui *UI) Init() {
 	ui.MainWindow.ShowAndRun()
 }
 
-func (ui UI) getCurrentImage() (*ourimage.OurImage, error) {
+func (ui *UI) getCurrentImage() (*ourimage.OurImage, error) {
 	if ui.tabs.SelectedIndex() == -1 {
 		return nil, fmt.Errorf("no image selected")
 	}
@@ -183,8 +184,10 @@ func (ui *UI) infoView() {
 	format := currentImage.Format()
 	size := currentImage.Dimensions()
 	message := fmt.Sprintf("Format: %v\n Size: %v bytes (%v x %v)\n", format, humanize.Bytes(uint64(size.X*size.Y)), size.X, size.Y)
-	message += "Brightness: " + strconv.Itoa(currentImage.Brightness())
-	message += "\nContrass: " + fmt.Sprintf("%f", currentImage.Contrass())
+  minColor, maxColor := currentImage.MinAndMaxColor()
+  message += fmt.Sprintf("Range: [%v, %v]", minColor, maxColor)
+	message += "\nBrightness: " + fmt.Sprintf("%f", currentImage.Brightness())
+	message += "\nContrast: " + fmt.Sprintf("%f", currentImage.Contrast())
 	entropy, numberOfColors := currentImage.EntropyAndNumberOfColors()
 	message += "\nEntropy: " + strconv.Itoa(entropy) + " with " + strconv.Itoa(numberOfColors) + " diferent colors"
 	dialog := dialog.NewInformation("Information", message, ui.MainWindow)
