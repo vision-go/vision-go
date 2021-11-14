@@ -82,8 +82,8 @@ func (ui *UI) gammaCorrectionOp() {
 		if err != nil {
 			return err
 		}
-		if valueFloat < 0 || valueFloat > 20 {
-			return fmt.Errorf("gamma must be between values 0 and 20")
+		if valueFloat < 0.05 || valueFloat > 20 {
+			return fmt.Errorf("gamma must be between values 0.05 and 20")
 		}
 		return nil
 	}

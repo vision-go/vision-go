@@ -150,7 +150,6 @@ func (originalImg *OurImage) GammaCorrection(gamma float64) *OurImage {
 	b := originalImg.canvasImage.Image.Bounds()
 	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
 	localLookUpTable := make([]color.Gray, 256)
-	fmt.Println("gamma: ", gamma)
 	for colour := range localLookUpTable {
 		a := float64(colour) / 255
 		b := math.Pow(a, gamma)
