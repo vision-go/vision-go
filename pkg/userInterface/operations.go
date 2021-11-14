@@ -12,19 +12,21 @@ import (
 )
 
 func (ui *UI) negativeOp() {
-	if ui.tabs.SelectedIndex() == -1 {
-		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
+	currentImage, err := ui.getCurrentImage()
+	if err != nil {
+		dialog.ShowError(err, ui.MainWindow)
 		return
 	}
-	ui.newImage(ui.tabsElements[ui.tabs.SelectedIndex()].Negative())
+	ui.newImage(currentImage.Negative())
 }
 
 func (ui *UI) monochromeOp() {
-	if ui.tabs.SelectedIndex() == -1 {
-		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
+	currentImage, err := ui.getCurrentImage()
+	if err != nil {
+		dialog.ShowError(err, ui.MainWindow)
 		return
 	}
-	ui.newImage(ui.tabsElements[ui.tabs.SelectedIndex()].Monochrome())
+	ui.newImage(currentImage.Monochrome())
 }
 
 func (ui *UI) adjustBrightnessAndContrastOp() {
@@ -81,7 +83,7 @@ func (ui *UI) gammaCorrectionOp() {
 			return err
 		}
 		if valueFloat < 0 || valueFloat > 20 {
-			return fmt.Errorf("Gamma must be between values 0 and 20")
+			return fmt.Errorf("gamma must be between values 0 and 20")
 		}
 		return nil
 	}
@@ -109,14 +111,14 @@ func newPoint(id int) (*point, fyne.CanvasObject) {
 	p := &point{}
 	p.validator_ = func(value string) error {
 		if value == "" {
-			return fmt.Errorf("Can't be null")
+			return fmt.Errorf("can't be null")
 		}
 		valueInt, err := strconv.Atoi(value)
 		if err != nil {
 			return err
 		}
 		if valueInt < 0 || valueInt > 255 {
-			return fmt.Errorf("The number must be in the range [0, 255]")
+			return fmt.Errorf("the number must be in the range [0, 255]")
 		}
 		return nil
 	}
@@ -153,7 +155,7 @@ func (ui *UI) linearTransformationOp() {
 			return err
 		}
 		if valueInt <= 0 {
-			return fmt.Errorf("The number of points must be positive")
+			return fmt.Errorf("the number of points must be positive")
 		}
 		return nil
 	}

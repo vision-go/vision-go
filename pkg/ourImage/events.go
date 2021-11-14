@@ -10,19 +10,18 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-// Events //
-func (self *OurImage) MouseIn(mouse *desktop.MouseEvent) {
-	if self.statusBar != nil {
-		r, g, b, a := self.canvasImage.Image.At(int(mouse.Position.X), int(mouse.Position.Y)).RGBA()
-		self.statusBar.SetText("R: " + strconv.Itoa(int(r>>8)) + " || G: " + strconv.Itoa(int(g>>8)) + " || B: " + strconv.Itoa(int(b>>8)) + " || A: " + strconv.Itoa(int(a>>8)))
+func (ourimage *OurImage) MouseIn(mouse *desktop.MouseEvent) {
+	if ourimage.statusBar != nil {
+		r, g, b, a := ourimage.canvasImage.Image.At(int(mouse.Position.X), int(mouse.Position.Y)).RGBA()
+		ourimage.statusBar.SetText("R: " + strconv.Itoa(int(r>>8)) + " || G: " + strconv.Itoa(int(g>>8)) + " || B: " + strconv.Itoa(int(b>>8)) + " || A: " + strconv.Itoa(int(a>>8)))
 	}
 }
 
 // MouseMoved is a hook that is called if the mouse pointer moved over the element.
-func (self *OurImage) MouseMoved(mouse *desktop.MouseEvent) {
-	if self.statusBar != nil {
-		r, g, b, a := self.canvasImage.Image.At(int(mouse.Position.X), int(mouse.Position.Y)).RGBA()
-		self.statusBar.SetText("R: " + strconv.Itoa(int(r>>8)) + " || G: " + strconv.Itoa(int(g>>8)) + " || B: " + strconv.Itoa(int(b>>8)) + " || A: " + strconv.Itoa(int(a>>8)))
+func (ourimage *OurImage) MouseMoved(mouse *desktop.MouseEvent) {
+	if ourimage.statusBar != nil {
+		r, g, b, a := ourimage.canvasImage.Image.At(int(mouse.Position.X), int(mouse.Position.Y)).RGBA()
+		ourimage.statusBar.SetText("R: " + strconv.Itoa(int(r>>8)) + " || G: " + strconv.Itoa(int(g>>8)) + " || B: " + strconv.Itoa(int(b>>8)) + " || A: " + strconv.Itoa(int(a>>8)))
 	}
 }
 

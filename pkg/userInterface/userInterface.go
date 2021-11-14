@@ -51,6 +51,12 @@ func (ui *UI) Init() {
 
 	ui.label = widget.NewLabel("")
 
+  histograms := fyne.NewMenuItem("Histograms", nil)
+  histograms.ChildMenu = fyne.NewMenu("",
+			fyne.NewMenuItem("Histogram", ui.histogram),
+			fyne.NewMenuItem("Accumulative Histogram", ui.accumulativeHistogram),
+			fyne.NewMenuItem("Normalized Histogram", ui.normalizedHistogram),
+  )
 	ui.menu = fyne.NewMainMenu(
 		fyne.NewMenu("File",
 			fyne.NewMenuItem("Open", ui.openDialog),
@@ -66,9 +72,7 @@ func (ui *UI) Init() {
 		),
 		fyne.NewMenu("View",
 			fyne.NewMenuItem("Info", ui.infoView),
-			fyne.NewMenuItem("Histogram", ui.histogram),
-			fyne.NewMenuItem("Accumulative Histogram", ui.accumulativeHistogram),
-			fyne.NewMenuItem("Normalized Histogram", ui.normalizedHistogram),
+      histograms,
 		),
 	)
 
