@@ -27,7 +27,7 @@ func (ui *UI) monochromeOp() {
 	ui.newImage(ui.tabsElements[ui.tabs.SelectedIndex()].Monochrome())
 }
 
-func (ui *UI) adjustBrightnessAndContrast() {
+func (ui *UI) adjustBrightnessAndContrastOp() {
 	currentImage, err := ui.getCurrentImage()
 	if err != nil {
 		dialog.ShowError(err, ui.MainWindow)
@@ -64,6 +64,36 @@ func (ui *UI) adjustBrightnessAndContrast() {
 				dialog.ShowError(err, ui.MainWindow)
 			}
 			ui.newImage(newImage.BrightnessAndContrast(brightness, contrast))
+		},
+		ui.MainWindow)
+}
+
+func (ui *UI) gammaCorrectionOp() {
+	currentImage, err := ui.getCurrentImage()
+	if err != nil {
+		dialog.ShowError(err, ui.MainWindow)
+		return
+	}
+	entry := widget.NewEntry()
+	entry.Validator = func(value string) error {
+		valueFloat, err := strconv.ParseFloat(value, 64)
+		if err != nil {
+			return err
+		}
+		if valueFloat < 0 || valueFloat > 20 {
+			return fmt.Errorf("Gamma must be between values 0 and 20")
+		}
+		return nil
+	}
+	form := []*widget.FormItem{widget.NewFormItem("Gamma", entry)}
+	dialog.ShowForm("Select gamma", "Ok", "Cancel", form,
+		func(choice bool) {
+			if !choice {
+				return
+			}
+			// No need to check thanks to validator
+			gamma, _ := strconv.ParseFloat(entry.Text, 64)
+			ui.newImage(currentImage.GammaCorrection(gamma))
 		},
 		ui.MainWindow)
 }

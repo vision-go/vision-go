@@ -249,6 +249,27 @@ func (originalImg *OurImage) BrightnessAndContrast(brightness, contrast float64)
 	return originalImg.newFromImage(NewImage, "B/C")
 }
 
+func (originalImg *OurImage) GammaCorrection(gamma float64) *OurImage {
+	b := originalImg.canvasImage.Image.Bounds()
+	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
+	localLookUpTable := make([]color.Gray, 256)
+	fmt.Println("gamma: ", gamma)
+	for colour := range localLookUpTable {
+		a := float64(colour) / 255
+		b := math.Pow(a, gamma)
+		localLookUpTable[colour] = color.Gray{uint8(math.Round(b * 255))}
+	}
+	for x := 0; x < originalImg.canvasImage.Image.Bounds().Dx(); x++ {
+		for y := 0; y < originalImg.canvasImage.Image.Bounds().Dy(); y++ {
+			r, g, b, a := originalImg.canvasImage.Image.At(x, y).RGBA()
+			r, g, b = r>>8, g>>8, b>>8
+			NewImage.Set(x, y, color.RGBA{R: localLookUpTable[r].Y,
+				G: localLookUpTable[g].Y, B: localLookUpTable[b].Y, A: uint8(a)})
+		}
+	}
+	return originalImg.newFromImage(NewImage, "Gamma")
+}
+
 func makeHistogram(image *OurImage) {
 	for i := 0; i < 256; i++ {
 		image.HistogramR.Values[i] = 0
