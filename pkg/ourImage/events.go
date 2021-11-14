@@ -1,12 +1,12 @@
 package ourimage
 
 import (
-	"strconv"
-	"math"
 	"image"
+	"math"
+	"strconv"
 
 	"fyne.io/fyne/v2"
-  "fyne.io/fyne/v2/driver/desktop"
+	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/widget"
 )
 

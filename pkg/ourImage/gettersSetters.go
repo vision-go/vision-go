@@ -1,8 +1,8 @@
 package ourimage
 
 import (
-  "image"
-  "fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/canvas"
+	"image"
 )
 
 func (img *OurImage) Name() string {
@@ -30,14 +30,14 @@ func (img *OurImage) EntropyAndNumberOfColors() (int, int) {
 }
 
 func (img *OurImage) CanvasImage() *canvas.Image {
-  return img.canvasImage
+	return img.canvasImage
 }
 
 func (img *OurImage) MinAndMaxColor() (int, int) {
-  return img.minColor, img.maxColor
+	return img.minColor, img.maxColor
 }
 
 // [4,8] -> 4, 5, 6, 7, 8 (5)
 func (img *OurImage) Range() int {
-  return img.maxColor - img.minColor + 1
+	return img.maxColor - img.minColor + 1
 }

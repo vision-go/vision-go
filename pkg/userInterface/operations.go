@@ -28,44 +28,44 @@ func (ui *UI) monochromeOp() {
 }
 
 func (ui *UI) adjustBrightnessAndContrast() {
-  currentImage, err := ui.getCurrentImage()
-  if err != nil {
+	currentImage, err := ui.getCurrentImage()
+	if err != nil {
 		dialog.ShowError(err, ui.MainWindow)
 		return
-  }
-  newImage := *currentImage
-  brightnessValue, contrastValue := binding.NewFloat(), binding.NewFloat()
-  brightnessLabel, contrastLabel :=
-    widget.NewLabelWithData(binding.FloatToStringWithFormat(brightnessValue, "%v")), 
-    widget.NewLabelWithData(binding.FloatToStringWithFormat(contrastValue, "%v"))
-  brightnessSlider, contrastSlider :=
-    widget.NewSliderWithData(0, 255, brightnessValue),
-    widget.NewSliderWithData(0, 255, contrastValue)
-  brightnessSlider.SetValue(newImage.Brightness())
-  contrastSlider.SetValue(newImage.Contrast())
-  brightnessSlider.OnChanged = func(value float64) {
-    brightnessValue.Set(value)
-  }
-  contrastSlider.OnChanged = func(value float64) {
-    contrastValue.Set(value)
-  }
-  content := container.NewGridWithRows(4, brightnessLabel, brightnessSlider, contrastLabel, contrastSlider)
-  dialog.ShowCustomConfirm("Adjust Brightness and Contrast", "Ok", "Cancel", content,
-    func(choice bool) {
-      if !choice {
-        return
-      }
-      brightness, err := brightnessValue.Get()
-      if err != nil {
-        dialog.ShowError(err, ui.MainWindow)
-      }
-      contrast, err := contrastValue.Get()
-      if err != nil {
-        dialog.ShowError(err, ui.MainWindow)
-      }
-      ui.newImage(newImage.BrightnessAndContrast(brightness, contrast))
-    },
-    ui.MainWindow)
+	}
+	newImage := *currentImage
+	brightnessValue, contrastValue := binding.NewFloat(), binding.NewFloat()
+	brightnessLabel, contrastLabel :=
+		widget.NewLabelWithData(binding.FloatToStringWithFormat(brightnessValue, "%v")),
+		widget.NewLabelWithData(binding.FloatToStringWithFormat(contrastValue, "%v"))
+	brightnessSlider, contrastSlider :=
+		widget.NewSliderWithData(0, 255, brightnessValue),
+		widget.NewSliderWithData(0, 255, contrastValue)
+	brightnessSlider.SetValue(newImage.Brightness())
+	contrastSlider.SetValue(newImage.Contrast())
+	brightnessSlider.OnChanged = func(value float64) {
+		brightnessValue.Set(value)
+	}
+	contrastSlider.OnChanged = func(value float64) {
+		contrastValue.Set(value)
+	}
+	content := container.NewGridWithRows(4, brightnessLabel, brightnessSlider, contrastLabel, contrastSlider)
+	dialog.ShowCustomConfirm("Adjust Brightness and Contrast", "Ok", "Cancel", content,
+		func(choice bool) {
+			if !choice {
+				return
+			}
+			brightness, err := brightnessValue.Get()
+			if err != nil {
+				dialog.ShowError(err, ui.MainWindow)
+			}
+			contrast, err := contrastValue.Get()
+			if err != nil {
+				dialog.ShowError(err, ui.MainWindow)
+			}
+			ui.newImage(newImage.BrightnessAndContrast(brightness, contrast))
+		},
+		ui.MainWindow)
 }
 
 // Linear transformation operation

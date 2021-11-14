@@ -20,20 +20,20 @@ import (
 
 type OurImage struct {
 	widget.BaseWidget
-	name             string
-	canvasImage      *canvas.Image
-	format           string
-	brightness       float64
-	contrast         float64
-	entropy          int
-	numberOfColors   int
-  minColor, maxColor int
-  size int
-	statusBar        *widget.Label
-	mainWindow       fyne.Window
-	rectangle        image.Rectangle
-	ROIcallback      func(*OurImage)
-	newImageCallback func(*OurImage)
+	name               string
+	canvasImage        *canvas.Image
+	format             string
+	brightness         float64
+	contrast           float64
+	entropy            int
+	numberOfColors     int
+	minColor, maxColor int
+	size               int
+	statusBar          *widget.Label
+	mainWindow         fyne.Window
+	rectangle          image.Rectangle
+	ROIcallback        func(*OurImage)
+	newImageCallback   func(*OurImage)
 
 	HistogramR histogram.Histogram
 	HistogramG histogram.Histogram
@@ -87,15 +87,14 @@ func NewFromPath(path, name string, statusBar *widget.Label, w fyne.Window, ROIc
 	img.canvasImage = canvas.NewImageFromImage(inputImg)
 	img.canvasImage.FillMode = canvas.ImageFillOriginal
 
-  img.size = img.canvasImage.Image.Bounds().Dx() * img.canvasImage.Image.Bounds().Dy()
+	img.size = img.canvasImage.Image.Bounds().Dx() * img.canvasImage.Image.Bounds().Dy()
 	makeHistogram(img)
-  img.minColor, img.maxColor = img.calculateMinAndMaxColor()
+	img.minColor, img.maxColor = img.calculateMinAndMaxColor()
 	img.brightness = img.calculateBrightness()
 	img.contrast = img.calculateContrast(img.brightness)
 	img.entropy, img.numberOfColors = img.calculateEntropyAndNumberOfColors()
 	return img, nil
 }
-
 
 func (ourImage *OurImage) newFromImage(newImage image.Image, actionForName string) *OurImage {
 	img := &OurImage{}
@@ -107,9 +106,9 @@ func (ourImage *OurImage) newFromImage(newImage image.Image, actionForName strin
 	img.ExtendBaseWidget(img)
 	img.canvasImage = canvas.NewImageFromImage(newImage)
 	img.canvasImage.FillMode = canvas.ImageFillOriginal
-  img.size = img.canvasImage.Image.Bounds().Dx() * img.canvasImage.Image.Bounds().Dy()
+	img.size = img.canvasImage.Image.Bounds().Dx() * img.canvasImage.Image.Bounds().Dy()
 	makeHistogram(img)
-  img.minColor, img.maxColor = img.calculateMinAndMaxColor()
+	img.minColor, img.maxColor = img.calculateMinAndMaxColor()
 	img.brightness = img.calculateBrightness()
 	img.contrast = img.calculateContrast(img.brightness)
 	img.entropy, img.numberOfColors = img.calculateEntropyAndNumberOfColors()
@@ -117,9 +116,9 @@ func (ourImage *OurImage) newFromImage(newImage image.Image, actionForName strin
 }
 
 func (img *OurImage) addOperationToName(actionForName string) string {
-  if actionForName == "" {
-    return img.name
-  }
+	if actionForName == "" {
+		return img.name
+	}
 	actionForName = "(" + actionForName + ")"
 	pointIndex := strings.LastIndex(img.name, ".")
 	if pointIndex == -1 {
@@ -147,38 +146,38 @@ func (ourimage *OurImage) calculateBrightness() (value float64) {
 
 func (ourimage *OurImage) calculateContrast(brightness float64) (value float64) {
 	for _, count := range ourimage.Histogram.Values {
-		value += (float64(count)-brightness) * (float64(count)-brightness)
+		value += (float64(count) - brightness) * (float64(count) - brightness)
 	}
-  return math.Sqrt(value / float64(ourimage.size))
+	return math.Sqrt(value / float64(ourimage.size))
 }
 
 func (ourimage *OurImage) calculateMinAndMaxColor() (min, max int) {
-  for color, count := range ourimage.Histogram.Values {
-    if count != 0 {
-      min = color
-      break
-    }
-  }
-  for max = ourimage.Histogram.Len(); max > 0; max-- {
-    if ourimage.Histogram.At(max) != 0 {
-      break
-    }
-  }
-  return
+	for color, count := range ourimage.Histogram.Values {
+		if count != 0 {
+			min = color
+			break
+		}
+	}
+	for max = ourimage.Histogram.Len(); max > 0; max-- {
+		if ourimage.Histogram.At(max) != 0 {
+			break
+		}
+	}
+	return
 }
 
 func (ourimage *OurImage) calculateEntropyAndNumberOfColors() (int, int) {
 	var sum float64
 	var numberOfColors int
-  for _, count := range(ourimage.Histogram.Values) {
-    if count != 0 {
-      numberOfColors++
-    }
-  }
-	for _, count := range(ourimage.Histogram.Values) {
+	for _, count := range ourimage.Histogram.Values {
 		if count != 0 {
-      probability := 1 / float64(numberOfColors)
-      sum += probability * math.Log2(probability)
+			numberOfColors++
+		}
+	}
+	for _, count := range ourimage.Histogram.Values {
+		if count != 0 {
+			probability := 1 / float64(numberOfColors)
+			sum += probability * math.Log2(probability)
 		}
 	}
 	return int(math.Ceil(sum * -1)), numberOfColors
@@ -226,25 +225,25 @@ func (originalImg *OurImage) BrightnessAndContrast(brightness, contrast float64)
 	b := originalImg.canvasImage.Image.Bounds()
 	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
 
-  A := contrast / originalImg.contrast
-  B := brightness - A * originalImg.brightness
-  localLookUpTable := make([]color.Gray, 256)
-  for colour := range localLookUpTable {
-    vOut := A*float64(colour)+B
-    if vOut > 255 {
-      localLookUpTable[colour] = color.Gray{255}
-    } else if vOut < 0 {
-      localLookUpTable[colour] = color.Gray{0}
-    } else {
-      localLookUpTable[colour] = color.Gray{uint8(A*float64(colour)+B)}
-    }
-  }
-  for x := 0; x < originalImg.canvasImage.Image.Bounds().Dx(); x++ {
-    for y := 0; y < originalImg.canvasImage.Image.Bounds().Dy(); y++ {
+	A := contrast / originalImg.contrast
+	B := brightness - A*originalImg.brightness
+	localLookUpTable := make([]color.Gray, 256)
+	for colour := range localLookUpTable {
+		vOut := A*float64(colour) + B
+		if vOut > 255 {
+			localLookUpTable[colour] = color.Gray{255}
+		} else if vOut < 0 {
+			localLookUpTable[colour] = color.Gray{0}
+		} else {
+			localLookUpTable[colour] = color.Gray{uint8(A*float64(colour) + B)}
+		}
+	}
+	for x := 0; x < originalImg.canvasImage.Image.Bounds().Dx(); x++ {
+		for y := 0; y < originalImg.canvasImage.Image.Bounds().Dy(); y++ {
 			r, g, b, a := originalImg.canvasImage.Image.At(x, y).RGBA()
-      r, g, b = r>>8, g>>8, b>>8
-      NewImage.Set(x, y, color.RGBA{R:localLookUpTable[r].Y,
-        G:localLookUpTable[g].Y, B:localLookUpTable[b].Y, A:uint8(a)})
+			r, g, b = r>>8, g>>8, b>>8
+			NewImage.Set(x, y, color.RGBA{R: localLookUpTable[r].Y,
+				G: localLookUpTable[g].Y, B: localLookUpTable[b].Y, A: uint8(a)})
 		}
 	}
 	return originalImg.newFromImage(NewImage, "B/C")
