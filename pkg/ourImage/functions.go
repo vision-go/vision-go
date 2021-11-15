@@ -35,21 +35,21 @@ func (img *OurImage) Save(file *os.File, format string) error {
 }
 
 func (ourimage *OurImage) calculateBrightness() (value float64) {
-	for color, count := range ourimage.Histogram.Values {
+	for color, count := range ourimage.Histogram {
 		value += float64(color * count)
 	}
 	return value / float64(ourimage.size)
 }
 
 func (ourimage *OurImage) calculateContrast(brightness float64) (value float64) {
-	for _, count := range ourimage.Histogram.Values {
-		value += (float64(count) - brightness) * (float64(count) - brightness)
+	for color, count := range ourimage.Histogram {
+		value += float64(count) * (float64(color) - brightness) * (float64(color) - brightness)
 	}
 	return math.Sqrt(value / float64(ourimage.size))
 }
 
 func (ourimage *OurImage) calculateMinAndMaxColor() (min, max int) {
-	for color, count := range ourimage.Histogram.Values {
+	for color, count := range ourimage.Histogram {
 		if count != 0 {
 			min = color
 			break
@@ -66,12 +66,12 @@ func (ourimage *OurImage) calculateMinAndMaxColor() (min, max int) {
 func (ourimage *OurImage) calculateEntropyAndNumberOfColors() (int, int) {
 	var sum float64
 	var numberOfColors int
-	for _, count := range ourimage.Histogram.Values {
+	for _, count := range ourimage.Histogram {
 		if count != 0 {
 			numberOfColors++
 		}
 	}
-	for _, count := range ourimage.Histogram.Values {
+	for _, count := range ourimage.Histogram {
 		if count != 0 {
 			probability := 1 / float64(numberOfColors)
 			sum += probability * math.Log2(probability)
@@ -132,7 +132,7 @@ func (originalImg *OurImage) BrightnessAndContrast(brightness, contrast float64)
 		} else if vOut < 0 {
 			localLookUpTable[colour] = color.Gray{0}
 		} else {
-			localLookUpTable[colour] = color.Gray{uint8(A*float64(colour) + B)}
+			localLookUpTable[colour] = color.Gray{uint8(vOut)}
 		}
 	}
 	for x := 0; x < originalImg.canvasImage.Image.Bounds().Dx(); x++ {
@@ -167,49 +167,33 @@ func (originalImg *OurImage) GammaCorrection(gamma float64) *OurImage {
 }
 
 func makeHistogram(image *OurImage) {
-	for i := 0; i < 256; i++ {
-		image.HistogramR.Values[i] = 0
-		image.HistogramG.Values[i] = 0
-		image.HistogramB.Values[i] = 0
-		image.Histogram.Values[i] = 0
-
-		image.HistogramAccumulativeR.Values[i] = 0
-		image.HistogramAccumulativeG.Values[i] = 0
-		image.HistogramAccumulativeB.Values[i] = 0
-		image.HistogramAccumulative.Values[i] = 0
-
-		image.HistogramNormalized.Values[i] = 0.0
-		image.HistogramNormalizedR.Values[i] = 0.0
-		image.HistogramNormalizedG.Values[i] = 0.0
-		image.HistogramNormalizedB.Values[i] = 0.0
-	}
 	for i := 0; i < image.canvasImage.Image.Bounds().Dx(); i++ {
 		for j := 0; j < image.canvasImage.Image.Bounds().Dy(); j++ {
 			r, g, b, a := image.canvasImage.Image.At(i, j).RGBA()
 			if a != 0 {
 				r, g, b = r>>8, g>>8, b>>8
-				image.HistogramR.Values[r] = image.HistogramR.At(int(r)) + 1
-				image.HistogramG.Values[g] = image.HistogramG.At(int(r)) + 1
-				image.HistogramB.Values[b] = image.HistogramG.At(int(r)) + 1
+				image.HistogramR[r] = image.HistogramR.At(int(r)) + 1
+				image.HistogramG[g] = image.HistogramG.At(int(g)) + 1
+				image.HistogramB[b] = image.HistogramG.At(int(b)) + 1
 
 				grey := 0.222*float64(r) + 0.707*float64(g) + 0.071*float64(b) // PAL
-				image.Histogram.Values[int(math.Round(grey))] = image.Histogram.At(int(math.Round(grey))) + 1
+				image.Histogram[int(math.Round(grey))] = image.Histogram.At(int(math.Round(grey))) + 1
 			}
 		}
 	}
-	for index := range image.Histogram.Values {
+	for index := range image.Histogram {
 		for i := 0; i < index; i++ {
-			image.HistogramAccumulativeR.Values[index] += image.HistogramR.At(i)
-			image.HistogramAccumulativeG.Values[index] += image.HistogramG.At(i)
-			image.HistogramAccumulativeB.Values[index] += image.HistogramB.At(i)
-			image.HistogramAccumulative.Values[index] += image.Histogram.At(i)
+			image.HistogramAccumulativeR[index] += image.HistogramR.At(i)
+			image.HistogramAccumulativeG[index] += image.HistogramG.At(i)
+			image.HistogramAccumulativeB[index] += image.HistogramB.At(i)
+			image.HistogramAccumulative[index] += image.Histogram.At(i)
 		}
 	}
 	for i := 0; i < 256; i++ {
-		image.HistogramNormalized.Values[i] = float64(image.Histogram.Values[i]) / float64(image.canvasImage.Image.Bounds().Dx()*image.canvasImage.Image.Bounds().Dy())
-		image.HistogramNormalizedR.Values[i] = float64(image.HistogramR.Values[i]) / float64(image.canvasImage.Image.Bounds().Dx()*image.canvasImage.Image.Bounds().Dy())
-		image.HistogramNormalizedG.Values[i] = float64(image.HistogramG.Values[i]) / float64(image.canvasImage.Image.Bounds().Dx()*image.canvasImage.Image.Bounds().Dy())
-		image.HistogramNormalizedB.Values[i] = float64(image.HistogramB.Values[i]) / float64(image.canvasImage.Image.Bounds().Dx()*image.canvasImage.Image.Bounds().Dy())
+		image.HistogramNormalized[i] = float64(image.Histogram[i]) / float64(image.size)
+		image.HistogramNormalizedR[i] = float64(image.HistogramR[i]) / float64(image.size)
+		image.HistogramNormalizedG[i] = float64(image.HistogramG[i]) / float64(image.size)
+		image.HistogramNormalizedB[i] = float64(image.HistogramB[i]) / float64(image.size)
 	}
 
 }

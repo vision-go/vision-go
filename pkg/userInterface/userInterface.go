@@ -254,10 +254,10 @@ func (ui *UI) normalizedHistogram() {
 
 	for i := 0; i < 256; i++ {
 		indexValues = append(indexValues, float64(i))
-		GrayGraph = append(GrayGraph, float64(ui.tabsElements[ui.tabs.SelectedIndex()].HistogramNormalized.Values[i]))
-		RedGraph = append(RedGraph, float64(ui.tabsElements[ui.tabs.SelectedIndex()].HistogramNormalizedR.Values[i]))
-		GreenGraph = append(GreenGraph, float64(ui.tabsElements[ui.tabs.SelectedIndex()].HistogramNormalizedG.Values[i]))
-		BlueGraph = append(BlueGraph, float64(ui.tabsElements[ui.tabs.SelectedIndex()].HistogramNormalizedB.Values[i]))
+		GrayGraph = append(GrayGraph, float64(ui.tabsElements[ui.tabs.SelectedIndex()].HistogramNormalized[i]))
+		RedGraph = append(RedGraph, float64(ui.tabsElements[ui.tabs.SelectedIndex()].HistogramNormalizedR[i]))
+		GreenGraph = append(GreenGraph, float64(ui.tabsElements[ui.tabs.SelectedIndex()].HistogramNormalizedG[i]))
+		BlueGraph = append(BlueGraph, float64(ui.tabsElements[ui.tabs.SelectedIndex()].HistogramNormalizedB[i]))
 	}
 	graph := chart.Chart{
 		Series: []chart.Series{
