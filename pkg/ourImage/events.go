@@ -13,7 +13,8 @@ import (
 func (ourimage *OurImage) MouseIn(mouse *desktop.MouseEvent) {
 	if ourimage.statusBar != nil {
 		r, g, b, a := ourimage.canvasImage.Image.At(int(mouse.Position.X), int(mouse.Position.Y)).RGBA()
-		ourimage.statusBar.SetText("R: " + strconv.Itoa(int(r>>8)) + " || G: " + strconv.Itoa(int(g>>8)) + " || B: " + strconv.Itoa(int(b>>8)) + " || A: " + strconv.Itoa(int(a>>8)))
+		ourimage.statusBar.SetText("x=" + strconv.Itoa(int(math.Round(float64(mouse.Position.X)))) + ", y=" + strconv.Itoa(int(math.Round(float64(mouse.Position.Y)))) +
+      ", R: " + strconv.Itoa(int(r>>8)) + " || G: " + strconv.Itoa(int(g>>8)) + " || B: " + strconv.Itoa(int(b>>8)) + " || A: " + strconv.Itoa(int(a>>8)))
 	}
 }
 
@@ -21,7 +22,8 @@ func (ourimage *OurImage) MouseIn(mouse *desktop.MouseEvent) {
 func (ourimage *OurImage) MouseMoved(mouse *desktop.MouseEvent) {
 	if ourimage.statusBar != nil {
 		r, g, b, a := ourimage.canvasImage.Image.At(int(mouse.Position.X), int(mouse.Position.Y)).RGBA()
-		ourimage.statusBar.SetText("R: " + strconv.Itoa(int(r>>8)) + " || G: " + strconv.Itoa(int(g>>8)) + " || B: " + strconv.Itoa(int(b>>8)) + " || A: " + strconv.Itoa(int(a>>8)))
+		ourimage.statusBar.SetText("x=" + strconv.Itoa(int(math.Round(float64(mouse.Position.X)))) + ", y=" + strconv.Itoa(int(math.Round(float64(mouse.Position.Y)))) +
+      ", R: " + strconv.Itoa(int(r>>8)) + " || G: " + strconv.Itoa(int(g>>8)) + " || B: " + strconv.Itoa(int(b>>8)) + " || A: " + strconv.Itoa(int(a>>8)))
 	}
 }
 
@@ -55,4 +57,7 @@ func (ourimage *OurImage) MouseUp(mouseEvent *desktop.MouseEvent) {
 	if ourimage.rectangle.Dx() > 10 && ourimage.rectangle.Dy() > 10 {
 		ourimage.ROIcallback(ourimage.ROI(ourimage.rectangle))
 	}
+}
+func (ourimage *OurImage) Cursor() desktop.Cursor {
+  return desktop.CrosshairCursor
 }

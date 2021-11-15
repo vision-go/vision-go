@@ -100,7 +100,10 @@ func (originalImg *OurImage) Monochrome() *OurImage {
 	for y := 0; y < originalImg.canvasImage.Image.Bounds().Dy(); y++ {
 		for x := 0; x < originalImg.canvasImage.Image.Bounds().Dx(); x++ {
 			oldColour := originalImg.canvasImage.Image.At(x, y)
-			r, g, b, _ := oldColour.RGBA()
+			r, g, b, a := oldColour.RGBA()
+      if a == 0 {
+        continue
+      }
 			NewImage.Set(x, y, color.Gray{Y: uint8(0.222*float32(r>>8) + 0.707*float32(g>>8) + 0.071*float32(b>>8))}) // PAL
 		}
 	}
