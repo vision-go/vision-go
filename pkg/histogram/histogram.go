@@ -11,7 +11,7 @@ func (hist Histogram) XY(x int) (a, b float64) {
 }
 
 func (hist Histogram) Len() int {
-	return 255
+	return 256
 }
 
 type HistogramNormalized [256]float64

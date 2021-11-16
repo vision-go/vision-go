@@ -55,7 +55,7 @@ func (ourimage *OurImage) calculateMinAndMaxColor() (min, max int) {
 			break
 		}
 	}
-	for max = ourimage.Histogram.Len(); max > 0; max-- {
+	for max = ourimage.Histogram.Len() - 1; max >= 0; max-- {
 		if ourimage.Histogram.At(max) != 0 {
 			break
 		}
