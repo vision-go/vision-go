@@ -25,8 +25,10 @@ type OurImage struct {
 	statusBar          *widget.Label
 	mainWindow         fyne.Window
 	rectangle          image.Rectangle
-	ROIcallback        func(*OurImage)
-	newImageCallback   func(*OurImage)
+
+	ROIcallback       func(*OurImage)
+	newImageCallback  func(*OurImage)
+	closeTabsCallback func(int)
 
 	HistogramR histogram.Histogram
 	HistogramG histogram.Histogram
@@ -48,13 +50,14 @@ func (ourimage *OurImage) CreateRenderer() fyne.WidgetRenderer {
 	return widget.NewSimpleRenderer(ourimage.canvasImage)
 }
 
-func NewFromPath(path, name string, statusBar *widget.Label, w fyne.Window, ROIcallback, newImageCallback func(*OurImage)) (*OurImage, error) {
+func NewFromPath(path, name string, statusBar *widget.Label, w fyne.Window, ROIcallback, newImageCallback func(*OurImage), closeTabsCallback func(int)) (*OurImage, error) {
 	img := &OurImage{}
 	img.name = name
 	img.statusBar = statusBar
 	img.mainWindow = w
 	img.ROIcallback = ROIcallback
 	img.newImageCallback = newImageCallback
+	img.closeTabsCallback = closeTabsCallback
 	img.ExtendBaseWidget(img)
 	f, err := os.Open(path)
 	if err != nil {

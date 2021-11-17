@@ -10,11 +10,17 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+const (
+	RightTabs = iota
+	AllTabs
+	OtherTabs
+)
+
 func (ourimage *OurImage) MouseIn(mouse *desktop.MouseEvent) {
 	if ourimage.statusBar != nil {
 		r, g, b, a := ourimage.canvasImage.Image.At(int(mouse.Position.X), int(mouse.Position.Y)).RGBA()
 		ourimage.statusBar.SetText("x=" + strconv.Itoa(int(math.Round(float64(mouse.Position.X)))) + ", y=" + strconv.Itoa(int(math.Round(float64(mouse.Position.Y)))) +
-      ", R: " + strconv.Itoa(int(r>>8)) + " || G: " + strconv.Itoa(int(g>>8)) + " || B: " + strconv.Itoa(int(b>>8)) + " || A: " + strconv.Itoa(int(a>>8)))
+			", R: " + strconv.Itoa(int(r>>8)) + " || G: " + strconv.Itoa(int(g>>8)) + " || B: " + strconv.Itoa(int(b>>8)) + " || A: " + strconv.Itoa(int(a>>8)))
 	}
 }
 
@@ -23,7 +29,7 @@ func (ourimage *OurImage) MouseMoved(mouse *desktop.MouseEvent) {
 	if ourimage.statusBar != nil {
 		r, g, b, a := ourimage.canvasImage.Image.At(int(mouse.Position.X), int(mouse.Position.Y)).RGBA()
 		ourimage.statusBar.SetText("x=" + strconv.Itoa(int(math.Round(float64(mouse.Position.X)))) + ", y=" + strconv.Itoa(int(math.Round(float64(mouse.Position.Y)))) +
-      ", R: " + strconv.Itoa(int(r>>8)) + " || G: " + strconv.Itoa(int(g>>8)) + " || B: " + strconv.Itoa(int(b>>8)) + " || A: " + strconv.Itoa(int(a>>8)))
+			", R: " + strconv.Itoa(int(r>>8)) + " || G: " + strconv.Itoa(int(g>>8)) + " || B: " + strconv.Itoa(int(b>>8)) + " || A: " + strconv.Itoa(int(a>>8)))
 	}
 }
 
@@ -39,9 +45,19 @@ func (ourimage *OurImage) MouseDown(mouseEvent *desktop.MouseEvent) {
 	if mouseEvent.Button == desktop.MouseButtonSecondary {
 		popUp := widget.NewPopUpMenu(
 			fyne.NewMenu("PopUp",
-				fyne.NewMenuItem("Duplicate",
+				fyne.NewMenuItem("Close tabs to right",
 					func() {
-						ourimage.newImageCallback(ourimage) // TODO am I really duplicating the image?
+						ourimage.closeTabsCallback(RightTabs)
+					},
+				),
+				fyne.NewMenuItem("Close all tabs",
+					func() {
+						ourimage.closeTabsCallback(AllTabs)
+					},
+				),
+				fyne.NewMenuItem("Close other tabs",
+					func() {
+						ourimage.closeTabsCallback(OtherTabs)
 					},
 				),
 			),
@@ -59,5 +75,5 @@ func (ourimage *OurImage) MouseUp(mouseEvent *desktop.MouseEvent) {
 	}
 }
 func (ourimage *OurImage) Cursor() desktop.Cursor {
-  return desktop.CrosshairCursor
+	return desktop.CrosshairCursor
 }

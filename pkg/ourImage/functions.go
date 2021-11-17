@@ -2,14 +2,16 @@ package ourimage
 
 import (
 	"fmt"
-	"math"
 	"image"
+	"image/color"
 	"image/jpeg"
 	"image/png"
+	"math"
 	"os"
+	"sort"
 	"strings"
-	"image/color"
 
+	"github.com/vision-go/vision-go/pkg/histogram"
 	lookUpTable "github.com/vision-go/vision-go/pkg/look-up-table"
 )
 
@@ -101,9 +103,9 @@ func (originalImg *OurImage) Monochrome() *OurImage {
 		for x := 0; x < originalImg.canvasImage.Image.Bounds().Dx(); x++ {
 			oldColour := originalImg.canvasImage.Image.At(x, y)
 			r, g, b, a := oldColour.RGBA()
-      if a == 0 {
-        continue
-      }
+			if a == 0 {
+				continue
+			}
 			NewImage.Set(x, y, color.Gray{Y: uint8(0.222*float32(r>>8) + 0.707*float32(g>>8) + 0.071*float32(b>>8))}) // PAL
 		}
 	}
@@ -169,6 +171,44 @@ func (originalImg *OurImage) GammaCorrection(gamma float64) *OurImage {
 	return originalImg.newFromImage(NewImage, "Gamma")
 }
 
+func (ourimage *OurImage) LinearTransformation(points []*histogram.Point) *OurImage {
+	sort.Slice(points, func(i, j int) bool {
+		return points[i].X_ < points[j].X_
+	})
+	if points[0].X_ != 0 {
+		points = append([]*histogram.Point{{X_: 0, Y_: 0}}, points...)
+	}
+	if points[len(points)-1].X_ != 255 {
+		points = append(points, &histogram.Point{X_: 255, Y_: 255})
+	}
+	var localLookUpTable [256]color.Gray
+	calculate := func(p1, p2 histogram.Point) {
+		m := float64(p2.Y_-p1.Y_) / float64(p2.X_-p1.X_)
+		n := float64(p1.Y_) - m*float64(p1.X_)
+		for x := p1.X_; x < p2.X_; x++ {
+			localLookUpTable[x] = color.Gray{uint8(math.Round(m*float64(x) + n))}
+		}
+	}
+	i := 0
+	for j := 1; i < len(points)-1; i, j = i+2, j+2 {
+		calculate(*points[i], *points[j])
+	}
+	if i == len(points)-1 { // Even number of points
+		calculate(*points[len(points)-2], *points[len(points)-1])
+	}
+	b := ourimage.canvasImage.Image.Bounds()
+	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
+	for x := 0; x < ourimage.canvasImage.Image.Bounds().Dx(); x++ {
+		for y := 0; y < ourimage.canvasImage.Image.Bounds().Dy(); y++ {
+			r, g, b, a := ourimage.canvasImage.Image.At(x, y).RGBA()
+			r, g, b = r>>8, g>>8, b>>8
+			NewImage.Set(x, y, color.RGBA{R: localLookUpTable[r].Y,
+				G: localLookUpTable[g].Y, B: localLookUpTable[b].Y, A: uint8(a)})
+		}
+	}
+	return ourimage.newFromImage(NewImage, "LinearTrans")
+}
+
 func makeHistogram(image *OurImage) {
 	for i := 0; i < image.canvasImage.Image.Bounds().Dx(); i++ {
 		for j := 0; j < image.canvasImage.Image.Bounds().Dy(); j++ {
@@ -198,5 +238,4 @@ func makeHistogram(image *OurImage) {
 		image.HistogramNormalizedG[i] = float64(image.HistogramG[i]) / float64(image.size)
 		image.HistogramNormalizedB[i] = float64(image.HistogramB[i]) / float64(image.size)
 	}
-
 }

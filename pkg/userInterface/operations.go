@@ -2,21 +2,21 @@ package userinterface
 
 import (
 	"fmt"
-	"strconv"
-  "log"
 	"image"
+	"log"
+	"strconv"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 
 	"github.com/dustin/go-humanize"
+	"github.com/vision-go/vision-go/pkg/histogram"
 	"github.com/wcharczuk/go-chart/v2"
 	"github.com/wcharczuk/go-chart/v2/drawing"
-	"github.com/vision-go/vision-go/pkg/histogram"
 )
 
 func (ui *UI) negativeOp() {
@@ -43,7 +43,6 @@ func (ui *UI) adjustBrightnessAndContrastOp() {
 		dialog.ShowError(err, ui.MainWindow)
 		return
 	}
-	newImage := *currentImage
 	brightnessValue, contrastValue := binding.NewFloat(), binding.NewFloat()
 	brightnessLabel, contrastLabel :=
 		widget.NewLabelWithData(binding.FloatToStringWithFormat(brightnessValue, "%v")),
@@ -51,8 +50,8 @@ func (ui *UI) adjustBrightnessAndContrastOp() {
 	brightnessSlider, contrastSlider :=
 		widget.NewSliderWithData(0, 255, brightnessValue),
 		widget.NewSliderWithData(0, 255, contrastValue)
-	brightnessSlider.SetValue(newImage.Brightness())
-	contrastSlider.SetValue(newImage.Contrast())
+	brightnessSlider.SetValue(currentImage.Brightness())
+	contrastSlider.SetValue(currentImage.Contrast())
 	brightnessSlider.OnChanged = func(value float64) {
 		brightnessValue.Set(value)
 	}
@@ -73,7 +72,7 @@ func (ui *UI) adjustBrightnessAndContrastOp() {
 			if err != nil {
 				dialog.ShowError(err, ui.MainWindow)
 			}
-			ui.newImage(newImage.BrightnessAndContrast(brightness, contrast))
+			ui.newImage(currentImage.BrightnessAndContrast(brightness, contrast))
 		},
 		ui.MainWindow)
 }
@@ -101,8 +100,7 @@ func (ui *UI) gammaCorrectionOp() {
 			if !choice {
 				return
 			}
-			// No need to check thanks to validator
-			gamma, _ := strconv.ParseFloat(entry.Text, 64)
+			gamma, _ := strconv.ParseFloat(entry.Text, 64) // No need to check thanks to validator
 			ui.newImage(currentImage.GammaCorrection(gamma))
 		},
 		ui.MainWindow)
@@ -123,8 +121,7 @@ func (ui *UI) infoView() {
 	message += "\nContrast: " + fmt.Sprintf("%f", currentImage.Contrast())
 	entropy, numberOfColors := currentImage.EntropyAndNumberOfColors()
 	message += "\nEntropy: " + strconv.Itoa(entropy) + " with " + strconv.Itoa(numberOfColors) + " diferent colors"
-	dialog := dialog.NewInformation("Information", message, ui.MainWindow)
-	dialog.Show()
+	dialog.ShowInformation("Information", message, ui.MainWindow)
 }
 
 // Operations
@@ -376,98 +373,53 @@ func (ui *UI) calculateHistogramGraph(grey *histogram.Histogram, red *histogram.
 	return image
 }
 
-// Linear transformation operation
-type point struct {
-	x_         string
-	y_         string
-	validator_ func(value string) error
-}
-
-func newPoint(id int) (*point, fyne.CanvasObject) {
-	p := &point{}
-	p.validator_ = func(value string) error {
-		if value == "" {
-			return fmt.Errorf("can't be null")
-		}
-		valueInt, err := strconv.Atoi(value)
-		if err != nil {
-			return err
-		}
-		if valueInt < 0 || valueInt > 255 {
-			return fmt.Errorf("the number must be in the range [0, 255]")
-		}
-		return nil
-	}
-	widgetForX := widget.NewEntryWithData(binding.BindString(&p.x_))
-	widgetForX.Validator = p.validator_
-	widgetForY := widget.NewEntryWithData(binding.BindString(&p.y_))
-	widgetForY.Validator = p.validator_
-	return p, container.NewAdaptiveGrid(3, widget.NewLabel("Point "+strconv.Itoa(id+1)+": "), widgetForX, widgetForY)
-}
-
-func (p point) Validate() error {
-	errorX, errorY := p.validator_(p.x_), p.validator_(p.y_)
-	if errorX != nil {
-		return errorX
-	}
-	if errorY != nil {
-		return errorY
-	}
-	return nil
-}
-
+// TODO Improve this PLS
 func (ui *UI) linearTransformationOp() {
-	if ui.tabs.SelectedIndex() == -1 {
-		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
+	currentImage, err := ui.getCurrentImage()
+	if err != nil {
+		dialog.ShowError(err, ui.MainWindow)
 		return
 	}
-	var linearTransformationUI func(string)
-
-	// Ask for points
-	entry := widget.NewEntry()
-	entry.Validator = func(value string) error {
+	entryForNumberOfPoints := widget.NewEntry()
+	entryForNumberOfPoints.Validator = func(value string) error {
 		valueInt, err := strconv.Atoi(value)
 		if err != nil {
 			return err
 		}
-		if valueInt <= 0 {
-			return fmt.Errorf("the number of points must be positive")
+		if valueInt < 2 {
+			return fmt.Errorf("the number of points must greater than two")
 		}
 		return nil
 	}
-	entrySlice := []*widget.FormItem{widget.NewFormItem("", entry)}
-	dialog.ShowForm("How many points?", "OK", "Cancel", entrySlice,
+	dialog.ShowForm("How many points?", "OK", "Cancel",
+		[]*widget.FormItem{widget.NewFormItem("", entryForNumberOfPoints)},
 		func(choice bool) {
-			if choice {
-				linearTransformationUI(entrySlice[0].Widget.(*widget.Entry).Text)
+			if !choice {
 				return
 			}
-			fmt.Println("Rechazó")
-		}, ui.MainWindow)
-
-	// linearTransformationUI
-	linearTransformationUI = func(pointsNString string) {
-		pointsN, _ := strconv.Atoi(pointsNString) // Error already checked in Validator
-		var canvasPoints []fyne.CanvasObject
-		var points []*point
-		for i := 0; i < pointsN; i++ {
-			rawPoint, canvasPoint := newPoint(i)
-			points = append(points, rawPoint)
-			canvasPoints = append(canvasPoints, canvasPoint)
-		}
-		content := container.NewVBox(canvasPoints...)
-		dialog.ShowCustomConfirm("Linear Transformation", "OK", "Cancel", content,
-			func(choice bool) {
-				if !choice {
-					return
-				}
-				for _, point := range points {
-					if point.Validate() != nil {
-						dialog.ShowError(point.Validate(), ui.MainWindow)
+			var canvasPoints []fyne.CanvasObject
+			var points []*histogram.Point
+			pointsN, _ := strconv.Atoi(entryForNumberOfPoints.Text) // Error already checked in Validator
+			for i := 0; i < pointsN; i++ {
+				rawPoint, canvasPoint := histogram.NewPoint(i)
+				points = append(points, rawPoint)
+				canvasPoints = append(canvasPoints, canvasPoint)
+			}
+			content := container.NewVBox(canvasPoints...)
+			dialog.ShowCustomConfirm("Linear Transformation", "OK", "Cancel", content,
+				func(choice bool) {
+					if !choice {
 						return
 					}
-				}
-			},
-			ui.MainWindow)
-	}
+					for _, point := range points {
+						if point.Validate() != nil {
+							dialog.ShowError(point.Validate(), ui.MainWindow)
+							return
+						}
+					}
+					ui.newImage(currentImage.LinearTransformation(points))
+				},
+				ui.MainWindow)
+		},
+		ui.MainWindow)
 }

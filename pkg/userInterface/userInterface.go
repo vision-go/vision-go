@@ -29,12 +29,15 @@ func (ui *UI) Init() {
 	ui.tabs.Hide()
 	ui.tabs.CloseIntercept = func(tabItem *container.TabItem) {
 		ui.tabs.Select(tabItem)
+		fmt.Println("Cerrando imagen: ", ui.tabs.SelectedIndex())
 		dialog := dialog.NewConfirm("Close", "Are you sure you want to close "+tabItem.Text+" ?",
 			func(choice bool) {
 				if !choice {
 					return
 				}
-				ui.removeImage(ui.tabs.SelectedIndex(), tabItem)
+				if err := ui.removeImage(ui.tabs.SelectedIndex()); err != nil {
+					dialog.ShowError(err, ui.MainWindow)
+				}
 			},
 			ui.MainWindow)
 		dialog.Show()
@@ -42,12 +45,12 @@ func (ui *UI) Init() {
 
 	ui.label = widget.NewLabel("")
 
-  histograms := fyne.NewMenuItem("Histograms", nil)
-  histograms.ChildMenu = fyne.NewMenu("",
-			fyne.NewMenuItem("Histogram", ui.histogram),
-			fyne.NewMenuItem("Accumulative Histogram", ui.accumulativeHistogram),
-			fyne.NewMenuItem("Normalized Histogram", ui.normalizedHistogram),
-  )
+	histograms := fyne.NewMenuItem("Histograms", nil)
+	histograms.ChildMenu = fyne.NewMenu("",
+		fyne.NewMenuItem("Histogram", ui.histogram),
+		fyne.NewMenuItem("Accumulative Histogram", ui.accumulativeHistogram),
+		fyne.NewMenuItem("Normalized Histogram", ui.normalizedHistogram),
+	)
 	ui.menu = fyne.NewMainMenu(
 		fyne.NewMenu("File",
 			fyne.NewMenuItem("Open", ui.openDialog),
@@ -63,7 +66,7 @@ func (ui *UI) Init() {
 		),
 		fyne.NewMenu("View",
 			fyne.NewMenuItem("Info", ui.infoView),
-      histograms,
+			histograms,
 		),
 	)
 
@@ -90,7 +93,7 @@ func (ui *UI) openDialog() {
 			return
 		}
 		img, err := ourimage.NewFromPath(reader.URI().Path(), reader.URI().Name(),
-			ui.label, ui.MainWindow, ui.ROIcallback, ui.newImage)
+			ui.label, ui.MainWindow, ui.ROIcallback, ui.newImage, ui.closeTabsCallback)
 		if err != nil {
 			dialog.ShowError(err, ui.MainWindow)
 		}
@@ -164,10 +167,41 @@ func (ui *UI) newImage(img *ourimage.OurImage) {
 	}
 }
 
-func (ui *UI) removeImage(index int, tabItem *container.TabItem) {
+func (ui *UI) removeImage(index int) error {
+	if index > len(ui.tabsElements) || index < 0 {
+		return fmt.Errorf("you have tried to delete a image with index:%v\n. Number of images loaded:%v\n ", index, len(ui.tabsElements))
+	}
 	ui.tabsElements = append(ui.tabsElements[:index], ui.tabsElements[index+1:]...)
-	ui.tabs.Remove(tabItem)
+	ui.tabs.Remove(ui.tabs.Items[index])
 	if len(ui.tabsElements) == 0 {
 		ui.tabs.Hide()
+	}
+	return nil
+}
+
+func (ui *UI) closeTabsCallback(closeChoice int) {
+	currentImageIndex := ui.tabs.SelectedIndex()
+	if currentImageIndex == -1 {
+		dialog.ShowError(fmt.Errorf("internal: no image selected"), ui.MainWindow)
+		return
+	}
+	switch closeChoice {
+	case ourimage.RightTabs: // TODO check for error
+		for i := len(ui.tabsElements) - 1; i > currentImageIndex; i-- {
+			if err := ui.removeImage(i); err != nil {
+				dialog.ShowError(err, ui.MainWindow)
+			}
+		}
+	case ourimage.AllTabs:
+		for i := len(ui.tabsElements) - 1; i >= 0; i-- {
+			if err := ui.removeImage(i); err != nil {
+				dialog.ShowError(err, ui.MainWindow)
+			}
+		}
+	case ourimage.OtherTabs:
+		fmt.Println("OtherTabs")
+	default:
+		dialog.ShowError(fmt.Errorf("that is not a valid option in the pop-up menu"), ui.MainWindow)
+		return
 	}
 }

@@ -1,8 +1,8 @@
 package ourimage
 
 import (
-	"image"
 	"fyne.io/fyne/v2/canvas"
+	"image"
 )
 
 func (img *OurImage) Name() string {
