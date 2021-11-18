@@ -96,6 +96,7 @@ func (ourImage *OurImage) newFromImage(newImage image.Image, actionForName strin
 	img.statusBar = ourImage.statusBar
 	img.mainWindow = ourImage.mainWindow
 	img.ROIcallback = ourImage.ROIcallback
+	img.closeTabsCallback = ourImage.closeTabsCallback
 	img.ExtendBaseWidget(img)
 	img.canvasImage = canvas.NewImageFromImage(newImage)
 	img.canvasImage.FillMode = canvas.ImageFillOriginal
