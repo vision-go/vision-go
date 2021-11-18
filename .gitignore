@@ -1,1 +1,3 @@
 /vision-go
+dist/
+.goreleaser.yml
