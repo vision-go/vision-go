@@ -20,7 +20,7 @@ type UI struct {
 	MainWindow   fyne.Window
 	tabs         *container.DocTabs
 	label        *widget.Label
-  progessBar   *widget.ProgressBarInfinite
+	progessBar   *widget.ProgressBarInfinite
 	tabsElements []*ourimage.OurImage // Backend
 	menu         *fyne.MainMenu
 }
@@ -44,9 +44,9 @@ func (ui *UI) Init() {
 	}
 
 	ui.label = widget.NewLabel("")
-  ui.progessBar = widget.NewProgressBarInfinite()
-  ui.progessBar.Hide()
-  ui.progessBar.Stop()
+	ui.progessBar = widget.NewProgressBarInfinite()
+	ui.progessBar.Hide()
+	ui.progessBar.Stop()
 
 	histograms := fyne.NewMenuItem("Histograms", nil)
 	histograms.ChildMenu = fyne.NewMenu("",
@@ -95,16 +95,16 @@ func (ui *UI) openDialog() {
 		if reader == nil {
 			return
 		}
-    ui.progessBar.Start()
-    ui.progessBar.Show()
+		ui.progessBar.Start()
+		ui.progessBar.Show()
 		img, err := ourimage.NewFromPath(reader.URI().Path(), reader.URI().Name(),
 			ui.label, ui.MainWindow, ui.ROIcallback, ui.closeTabsCallback)
 		if err != nil {
 			dialog.ShowError(err, ui.MainWindow)
 		}
 		ui.newImage(img)
-    ui.progessBar.Hide()
-    ui.progessBar.Stop()
+		ui.progessBar.Hide()
+		ui.progessBar.Stop()
 	}, ui.MainWindow)
 	dialog.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpeg", ".jpg", ".tfe"}))
 	dialog.Show()
@@ -207,9 +207,9 @@ func (ui *UI) closeTabsCallback(closeChoice int) {
 		}
 	case ourimage.OtherTabs:
 		for i := len(ui.tabsElements) - 1; i >= 0; i-- {
-      if i == currentImageIndex {
-        continue
-      }
+			if i == currentImageIndex {
+				continue
+			}
 			if err := ui.removeImage(i); err != nil {
 				dialog.ShowError(err, ui.MainWindow)
 			}

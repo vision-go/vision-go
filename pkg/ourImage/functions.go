@@ -182,19 +182,16 @@ func (ourimage *OurImage) LinearTransformation(points []*histogram.Point) *OurIm
 		points = append(points, &histogram.Point{X_: 255, Y_: 255})
 	}
 	var localLookUpTable [256]color.Gray
-	calculate := func(p1, p2 histogram.Point) {
+	for i, j := 0, 1; j < len(points); i, j = i+1, j+1 {
+		p1, p2 := *points[i], *points[j]
+		if p2.X_ == p1.X_ {
+			p2.X_++
+		}
 		m := float64(p2.Y_-p1.Y_) / float64(p2.X_-p1.X_)
 		n := float64(p1.Y_) - m*float64(p1.X_)
 		for x := p1.X_; x < p2.X_; x++ {
 			localLookUpTable[x] = color.Gray{uint8(math.Round(m*float64(x) + n))}
 		}
-	}
-	i := 0
-	for j := 1; i < len(points)-1; i, j = i+2, j+2 {
-		calculate(*points[i], *points[j])
-	}
-	if i == len(points)-1 { // Even number of points
-		calculate(*points[len(points)-2], *points[len(points)-1])
 	}
 	b := ourimage.canvasImage.Image.Bounds()
 	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
