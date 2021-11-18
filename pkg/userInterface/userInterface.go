@@ -20,6 +20,7 @@ type UI struct {
 	MainWindow   fyne.Window
 	tabs         *container.DocTabs
 	label        *widget.Label
+  progessBar   *widget.ProgressBarInfinite
 	tabsElements []*ourimage.OurImage // Backend
 	menu         *fyne.MainMenu
 }
@@ -29,7 +30,6 @@ func (ui *UI) Init() {
 	ui.tabs.Hide()
 	ui.tabs.CloseIntercept = func(tabItem *container.TabItem) {
 		ui.tabs.Select(tabItem)
-		fmt.Println("Cerrando imagen: ", ui.tabs.SelectedIndex())
 		dialog := dialog.NewConfirm("Close", "Are you sure you want to close "+tabItem.Text+" ?",
 			func(choice bool) {
 				if !choice {
@@ -44,6 +44,9 @@ func (ui *UI) Init() {
 	}
 
 	ui.label = widget.NewLabel("")
+  ui.progessBar = widget.NewProgressBarInfinite()
+  ui.progessBar.Hide()
+  ui.progessBar.Stop()
 
 	histograms := fyne.NewMenuItem("Histograms", nil)
 	histograms.ChildMenu = fyne.NewMenu("",
@@ -72,7 +75,7 @@ func (ui *UI) Init() {
 
 	ui.MainWindow.SetMainMenu(ui.menu)
 	ui.MainWindow.Resize(fyne.NewSize(500, 500))
-	ui.MainWindow.SetContent(container.NewBorder(nil, ui.label, nil, nil, ui.tabs))
+	ui.MainWindow.SetContent(container.NewBorder(nil, container.NewBorder(nil, nil, ui.label, ui.progessBar), nil, nil, ui.tabs))
 	ui.MainWindow.ShowAndRun()
 }
 
@@ -92,12 +95,16 @@ func (ui *UI) openDialog() {
 		if reader == nil {
 			return
 		}
+    ui.progessBar.Start()
+    ui.progessBar.Show()
 		img, err := ourimage.NewFromPath(reader.URI().Path(), reader.URI().Name(),
-			ui.label, ui.MainWindow, ui.ROIcallback, ui.newImage, ui.closeTabsCallback)
+			ui.label, ui.MainWindow, ui.ROIcallback, ui.closeTabsCallback)
 		if err != nil {
 			dialog.ShowError(err, ui.MainWindow)
 		}
 		ui.newImage(img)
+    ui.progessBar.Hide()
+    ui.progessBar.Stop()
 	}, ui.MainWindow)
 	dialog.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpeg", ".jpg", ".tfe"}))
 	dialog.Show()
@@ -199,7 +206,14 @@ func (ui *UI) closeTabsCallback(closeChoice int) {
 			}
 		}
 	case ourimage.OtherTabs:
-		fmt.Println("OtherTabs")
+		for i := len(ui.tabsElements) - 1; i >= 0; i-- {
+      if i == currentImageIndex {
+        continue
+      }
+			if err := ui.removeImage(i); err != nil {
+				dialog.ShowError(err, ui.MainWindow)
+			}
+		}
 	default:
 		dialog.ShowError(fmt.Errorf("that is not a valid option in the pop-up menu"), ui.MainWindow)
 		return

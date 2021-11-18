@@ -405,7 +405,20 @@ func (ui *UI) linearTransformationOp() {
 				points = append(points, rawPoint)
 				canvasPoints = append(canvasPoints, canvasPoint)
 			}
-			content := container.NewVBox(canvasPoints...)
+      showGraph := widget.NewButton("Graph", func() { // TODO what about duplicated?
+        fmt.Println("Pim")
+        validatedPoints := make([]*histogram.Point, 0, len(points))
+        for _, point := range points {
+          if err := point.Validate(); err != nil {
+            continue;
+          }
+          validatedPoints = append(validatedPoints, point)
+        }
+        fmt.Println("Validated points")
+        fmt.Println(validatedPoints)
+        fmt.Println("Pam")
+      })
+			content := container.NewVBox(container.NewVBox(canvasPoints...), showGraph)
 			dialog.ShowCustomConfirm("Linear Transformation", "OK", "Cancel", content,
 				func(choice bool) {
 					if !choice {
