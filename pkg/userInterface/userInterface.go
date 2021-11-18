@@ -21,7 +21,7 @@ type UI struct {
 	tabs         *container.DocTabs
 	label        *widget.Label
 	progessBar   *widget.ProgressBarInfinite
-	tabsElements []*ourimage.OurImage // Backend
+	tabsElements []*ourimage.OurImage // To avoid reflection on tabs
 	menu         *fyne.MainMenu
 }
 
@@ -66,10 +66,16 @@ func (ui *UI) Init() {
 			fyne.NewMenuItem("Linear Transformation", ui.linearTransformationOp),
 			fyne.NewMenuItemSeparator(),
 			fyne.NewMenuItem("Gamma Correction", ui.gammaCorrectionOp),
+			fyne.NewMenuItem("Difference", ui.imgDifference),
+			fyne.NewMenuItem("Change Map From..", ui.imgChangeMap),
 		),
 		fyne.NewMenu("View",
 			fyne.NewMenuItem("Info", ui.infoView),
 			histograms,
+		),
+		fyne.NewMenu("No Linear Transformations",
+			fyne.NewMenuItem("Equalization", ui.equializationOp),
+			fyne.NewMenuItem("Histogram Igualation", ui.histogramEqual),
 		),
 	)
 

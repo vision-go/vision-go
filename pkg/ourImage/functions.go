@@ -1,86 +1,14 @@
 package ourimage
 
 import (
-	"fmt"
 	"image"
 	"image/color"
-	"image/jpeg"
-	"image/png"
 	"math"
-	"os"
 	"sort"
-	"strings"
 
 	"github.com/vision-go/vision-go/pkg/histogram"
 	lookUpTable "github.com/vision-go/vision-go/pkg/look-up-table"
 )
-
-func (img *OurImage) addOperationToName(actionForName string) string {
-	if actionForName == "" {
-		return img.name
-	}
-	actionForName = "(" + actionForName + ")"
-	pointIndex := strings.LastIndex(img.name, ".")
-	if pointIndex == -1 {
-		return img.name + actionForName
-	}
-	return img.name[:pointIndex] + actionForName + img.name[pointIndex:]
-}
-
-func (img *OurImage) Save(file *os.File, format string) error {
-	if format == "png" {
-		return png.Encode(file, img.canvasImage.Image)
-	} else if format == "jpeg" || format == "jpg" {
-		return jpeg.Encode(file, img.canvasImage.Image, nil)
-	}
-	return fmt.Errorf("incorrrect format")
-}
-
-func (ourimage *OurImage) calculateBrightness() (value float64) {
-	for color, count := range ourimage.Histogram {
-		value += float64(color * count)
-	}
-	return value / float64(ourimage.size)
-}
-
-func (ourimage *OurImage) calculateContrast(brightness float64) (value float64) {
-	for color, count := range ourimage.Histogram {
-		value += float64(count) * (float64(color) - brightness) * (float64(color) - brightness)
-	}
-	return math.Sqrt(value / float64(ourimage.size))
-}
-
-func (ourimage *OurImage) calculateMinAndMaxColor() (min, max int) {
-	for color, count := range ourimage.Histogram {
-		if count != 0 {
-			min = color
-			break
-		}
-	}
-	for max = ourimage.Histogram.Len() - 1; max >= 0; max-- {
-		if ourimage.Histogram.At(max) != 0 {
-			break
-		}
-	}
-	return
-}
-
-func (ourimage *OurImage) calculateEntropyAndNumberOfColors() (int, int) {
-	var sum float64
-	var numberOfColors int
-	for _, count := range ourimage.Histogram {
-		if count != 0 {
-			numberOfColors++
-		}
-	}
-	for _, count := range ourimage.Histogram {
-		if count != 0 {
-			probability := 1 / float64(numberOfColors)
-			sum += probability * math.Log2(probability)
-		}
-	}
-	return int(math.Ceil(sum * -1)), numberOfColors
-}
 
 func (originalImg *OurImage) Negative() *OurImage {
 	b := originalImg.canvasImage.Image.Bounds()
@@ -206,33 +134,164 @@ func (ourimage *OurImage) LinearTransformation(points []*histogram.Point) *OurIm
 	return ourimage.newFromImage(NewImage, "LinearTrans")
 }
 
-func makeHistogram(image *OurImage) {
-	for i := 0; i < image.canvasImage.Image.Bounds().Dx(); i++ {
-		for j := 0; j < image.canvasImage.Image.Bounds().Dy(); j++ {
-			r, g, b, a := image.canvasImage.Image.At(i, j).RGBA()
-			if a != 0 {
-				r, g, b = r>>8, g>>8, b>>8
-				image.HistogramR[r] = image.HistogramR.At(int(r)) + 1
-				image.HistogramG[g] = image.HistogramG.At(int(g)) + 1
-				image.HistogramB[b] = image.HistogramG.At(int(b)) + 1
+func (originalImg *OurImage) Equalization() *OurImage {
+	b := originalImg.canvasImage.Image.Bounds()
+	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
+	size := b.Dx() * b.Dy()
+	var lookUpTableArrayR [256]int
+	var lookUpTableArrayG [256]int
+	var lookUpTableArrayB [256]int
 
-				grey := 0.222*float64(r) + 0.707*float64(g) + 0.071*float64(b) // PAL
-				image.Histogram[int(math.Round(grey))] = image.Histogram.At(int(math.Round(grey))) + 1
+	for i := 0; i < 256; i++ {
+		lookUpTableArrayR[i] = Max(0, int(math.Round((float64(originalImg.HistogramAccumulativeR.At(i)*256)/float64(size))-1)))
+		lookUpTableArrayG[i] = Max(0, int(math.Round((float64(originalImg.HistogramAccumulativeG.At(i)*256)/float64(size))-1)))
+		lookUpTableArrayB[i] = Max(0, int(math.Round((float64(originalImg.HistogramAccumulativeB.At(i)*256)/float64(size))-1)))
+	}
+	for y := 0; y < originalImg.canvasImage.Image.Bounds().Dy(); y++ {
+		for x := 0; x < originalImg.canvasImage.Image.Bounds().Dx(); x++ {
+			oldColour := originalImg.canvasImage.Image.At(x, y)
+			r, g, b, a := oldColour.RGBA()
+			r, g, b = r>>8, g>>8, b>>8
+
+			newColor := color.RGBA{
+				R: uint8(lookUpTableArrayR[r]),
+				G: uint8(lookUpTableArrayG[g]),
+				B: uint8(lookUpTableArrayB[b]),
+				A: uint8(a),
+			}
+			NewImage.Set(x, y, newColor)
+		}
+	}
+	return originalImg.newFromImage(NewImage, "Ecualization")
+}
+
+func (originalImg *OurImage) HistogramIgualation(imageIn *OurImage) *OurImage {
+	b := originalImg.canvasImage.Image.Bounds()
+	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
+	size := b.Dx() * b.Dy()
+	var lookUpTableArrayR [256]int
+	var lookUpTableArrayG [256]int
+	var lookUpTableArrayB [256]int
+	sizeF := float64(size)
+
+	M := 256
+	PoR := originalImg.HistogramAccumulativeR
+	PoG := originalImg.HistogramAccumulativeG
+	PoB := originalImg.HistogramAccumulativeB
+	PrR := imageIn.HistogramAccumulativeR
+	PrG := imageIn.HistogramAccumulativeG
+	PrB := imageIn.HistogramAccumulativeB
+
+	for a := range lookUpTableArrayR {
+		for j := M - 1; j >= 0; j-- {
+			lookUpTableArrayR[a] = j
+			if (float64(PoR[a]) / sizeF) > (float64(PrR[j]) / sizeF) {
+				break
+			}
+		}
+
+		for j := M - 1; j >= 0; j-- {
+			lookUpTableArrayG[a] = j
+			if (float64(PoG[a]) / sizeF) > (float64(PrG[j]) / sizeF) {
+				break
+			}
+		}
+
+		for j := M - 1; j >= 0; j-- {
+			lookUpTableArrayB[a] = j
+			if (float64(PoB[a]) / sizeF) > (float64(PrB[j]) / sizeF) {
+				break
 			}
 		}
 	}
-	for index := range image.Histogram {
-		for i := 0; i < index; i++ {
-			image.HistogramAccumulativeR[index] += image.HistogramR.At(i)
-			image.HistogramAccumulativeG[index] += image.HistogramG.At(i)
-			image.HistogramAccumulativeB[index] += image.HistogramB.At(i)
-			image.HistogramAccumulative[index] += image.Histogram.At(i)
+	for y := 0; y < originalImg.canvasImage.Image.Bounds().Dy(); y++ {
+		for x := 0; x < originalImg.canvasImage.Image.Bounds().Dx(); x++ {
+			oldColour := originalImg.canvasImage.Image.At(x, y)
+			r, g, b, a := oldColour.RGBA()
+			r, g, b = r>>8, g>>8, b>>8
+
+			newColor := color.RGBA{
+				R: uint8(lookUpTableArrayR[r]),
+				G: uint8(lookUpTableArrayR[g]),
+				B: uint8(lookUpTableArrayR[b]),
+				A: uint8(a),
+			}
+			NewImage.Set(x, y, newColor)
 		}
 	}
-	for i := 0; i < 256; i++ {
-		image.HistogramNormalized[i] = float64(image.Histogram[i]) / float64(image.size)
-		image.HistogramNormalizedR[i] = float64(image.HistogramR[i]) / float64(image.size)
-		image.HistogramNormalizedG[i] = float64(image.HistogramG[i]) / float64(image.size)
-		image.HistogramNormalizedB[i] = float64(image.HistogramB[i]) / float64(image.size)
+	return originalImg.newFromImage(NewImage, "Histogram Igualated")
+}
+
+func (originalImg *OurImage) ImageDiference(imageIn *OurImage) *OurImage {
+	b := originalImg.canvasImage.Image.Bounds()
+	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
+
+	for y := 0; y < originalImg.canvasImage.Image.Bounds().Dy(); y++ {
+		for x := 0; x < originalImg.canvasImage.Image.Bounds().Dx(); x++ {
+			oldColour := originalImg.canvasImage.Image.At(x, y)
+			r, g, b, a := oldColour.RGBA()
+			r, g, b = r>>8, g>>8, b>>8
+
+			newColour := imageIn.canvasImage.Image.At(x, y)
+			r2, g2, b2, _ := newColour.RGBA()
+			r2, g2, b2 = r2>>8, g2>>8, b2>>8
+
+			newColor := color.RGBA{
+				R: uint8(math.Abs(float64(r) - float64(r2))),
+				G: uint8(math.Abs(float64(g) - float64(g2))),
+				B: uint8(math.Abs(float64(b) - float64(b2))),
+				A: uint8(a),
+			}
+			NewImage.Set(x, y, newColor)
+		}
 	}
+	return originalImg.newFromImage(NewImage, "Image Difference")
+}
+
+func (originalImg *OurImage) ChangeMap(imageIn *OurImage) *OurImage {
+	b := originalImg.canvasImage.Image.Bounds()
+	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
+	T := 20.0
+
+	for y := 0; y < originalImg.canvasImage.Image.Bounds().Dy(); y++ {
+		for x := 0; x < originalImg.canvasImage.Image.Bounds().Dx(); x++ {
+			oldColour := originalImg.canvasImage.Image.At(x, y)
+			r, g, b, a := oldColour.RGBA()
+			r, g, b = r>>8, g>>8, b>>8
+
+			newColour := imageIn.canvasImage.Image.At(x, y)
+			r2, g2, b2, _ := newColour.RGBA()
+			r2, g2, b2 = r2>>8, g2>>8, b2>>8
+			grey := 0.222*float64(r) + 0.707*float64(g) + 0.071*float64(b)
+			grey2 := 0.222*float64(r2) + 0.707*float64(g2) + 0.071*float64(b2)
+			difference := math.Abs(grey2 - grey)
+
+			var newColor color.RGBA
+			if difference > T {
+				newColor = color.RGBA{
+					R: 255,
+					G: 0,
+					B: 0,
+					A: uint8(a),
+				}
+			} else {
+				newColor = color.RGBA{
+					R: uint8(r),
+					G: uint8(g),
+					B: uint8(b),
+					A: uint8(a),
+				}
+			}
+
+			NewImage.Set(x, y, newColor)
+		}
+	}
+	return originalImg.newFromImage(NewImage, "Image Difference")
+}
+
+func Max(x, y int) int {
+	if x < y {
+		return y
+	}
+	return x
 }
