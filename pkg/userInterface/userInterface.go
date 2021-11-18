@@ -58,6 +58,8 @@ func (ui *UI) Init() {
 			fyne.NewMenuItem("Negative", ui.negativeOp),
 			fyne.NewMenuItem("Monochrome", ui.monochromeOp),
 			fyne.NewMenuItem("Linear Transformation", ui.linearTransformationOp),
+			fyne.NewMenuItem("Difference", ui.imgDifference),
+			fyne.NewMenuItem("Change Map From..", ui.imgChangeMap),
 		),
 		fyne.NewMenu("View",
 			fyne.NewMenuItem("Info", ui.infoView),
@@ -67,6 +69,8 @@ func (ui *UI) Init() {
 		),
 		fyne.NewMenu("No Linear Transformations",
 		fyne.NewMenuItem("Equalization", ui.equializationOp),
+		fyne.NewMenuItem("Histogram Igualation", ui.histogramEqual),
+		
 	),
 	)
 
@@ -292,6 +296,69 @@ func (ui *UI) calculateHistogramGraph(valuesY []float64, color drawing.Color) im
 		log.Fatal(err)
 	}
 	return image
+}
+
+
+func (ui *UI) histogramEqual()  {
+	dialog := dialog.NewFileOpen(func(reader fyne.URIReadCloser, err error) {
+		if err != nil {
+			dialog.ShowError(err, ui.MainWindow)
+			return
+		}
+		if reader == nil {
+			return
+		}
+		img, err := ourimage.NewFromPath(reader.URI().Path(), reader.URI().Name(),
+			ui.label, ui.MainWindow, ui.ROIcallback)
+		if err != nil {
+			dialog.ShowError(err, ui.MainWindow)
+		}
+		ui.newImage(ui.tabsElements[ui.tabs.SelectedIndex()].HistogramIgualation(img))
+	}, ui.MainWindow)
+	dialog.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpeg", ".jpg", ".tfe"}))
+	dialog.Show()
+
+}
+
+func (ui *UI) imgDifference()  {
+	dialog := dialog.NewFileOpen(func(reader fyne.URIReadCloser, err error) {
+		if err != nil {
+			dialog.ShowError(err, ui.MainWindow)
+			return
+		}
+		if reader == nil {
+			return
+		}
+		img, err := ourimage.NewFromPath(reader.URI().Path(), reader.URI().Name(),
+			ui.label, ui.MainWindow, ui.ROIcallback)
+		if err != nil {
+			dialog.ShowError(err, ui.MainWindow)
+		}
+		ui.newImage(ui.tabsElements[ui.tabs.SelectedIndex()].ImageDiference(img))
+	}, ui.MainWindow)
+	dialog.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpeg", ".jpg", ".tfe"}))
+	dialog.Show()
+}
+
+func (ui *UI) imgChangeMap()  {
+	dialog := dialog.NewFileOpen(func(reader fyne.URIReadCloser, err error) {
+		if err != nil {
+			dialog.ShowError(err, ui.MainWindow)
+			return
+		}
+		if reader == nil {
+			return
+		}
+		img, err := ourimage.NewFromPath(reader.URI().Path(), reader.URI().Name(),
+			ui.label, ui.MainWindow, ui.ROIcallback)
+		if err != nil {
+			dialog.ShowError(err, ui.MainWindow)
+		}
+		ui.newImage(ui.tabsElements[ui.tabs.SelectedIndex()].ChangeMap(img))
+	}, ui.MainWindow)
+	dialog.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpeg", ".jpg", ".tfe"}))
+	dialog.Show()
+
 }
 
 func convertToFloat(f32 []int) []float64 {
