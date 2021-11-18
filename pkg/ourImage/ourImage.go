@@ -1,13 +1,13 @@
 package ourimage
 
 import (
-  "fmt"
+	"fmt"
 	"image"
-	"os"
-	"strings"
-  "math"
 	"image/jpeg"
 	"image/png"
+	"math"
+	"os"
+	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"

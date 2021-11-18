@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image"
 	"log"
+	"sort"
 	"strconv"
 
 	"fyne.io/fyne/v2"
@@ -149,18 +150,26 @@ func (ui *UI) linearTransformationOp() {
 				points = append(points, rawPoint)
 				canvasPoints = append(canvasPoints, canvasPoint)
 			}
-			showGraph := widget.NewButton("Graph", func() { // TODO what about duplicated?
-				fmt.Println("Pim")
-				validatedPoints := make([]*histogram.Point, 0, len(points))
+			showGraph := widget.NewButton("Graph", func() {
+				validatedPoints := make([]histogram.Point, 0, len(points))
 				for _, point := range points {
 					if err := point.Validate(); err != nil {
 						continue
 					}
-					validatedPoints = append(validatedPoints, point)
+					validatedPoints = append(validatedPoints, *point)
 				}
-				fmt.Println("Validated points")
-				fmt.Println(validatedPoints)
-				fmt.Println("Pam")
+				w := ui.App.NewWindow("Graph")
+				w.Resize(fyne.NewSize(500, 500))
+				sort.Slice(validatedPoints, func(i, j int) bool {
+					return validatedPoints[i].X_ < validatedPoints[j].X_
+				})
+				img, err := createGraph(validatedPoints)
+				if err != nil {
+					dialog.ShowError(err, ui.MainWindow)
+					return
+				}
+				w.SetContent(canvas.NewImageFromImage(img))
+				w.Show()
 			})
 			content := container.NewVBox(container.NewVBox(canvasPoints...), showGraph)
 			dialog.ShowCustomConfirm("Linear Transformation", "OK", "Cancel", content,
@@ -204,9 +213,8 @@ func (ui *UI) histogram() {
 		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
 		return
 	}
-	a := ui.App.NewWindow(ui.tabs.Selected().Text + "(Histogram)")
+	a := ui.App.NewWindow(ui.tabs.Selected().Text + " || (Histogram)")
 	a.Resize(fyne.NewSize(500, 500))
-	a.Show()
 
 	image := ui.calculateHistogramGraph(convertToFloat(ui.tabsElements[ui.tabs.SelectedIndex()].Histogram[:]), drawing.ColorBlack)
 	imageR := ui.calculateHistogramGraph(convertToFloat(ui.tabsElements[ui.tabs.SelectedIndex()].HistogramR[:]), drawing.ColorRed)
@@ -221,6 +229,7 @@ func (ui *UI) histogram() {
 	content := container.New(layout.NewAdaptiveGridLayout(2), image1, image2, image3, image4)
 
 	a.SetContent(content)
+	a.Show()
 }
 
 func (ui *UI) accumulativeHistogram() {
@@ -228,9 +237,8 @@ func (ui *UI) accumulativeHistogram() {
 		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
 		return
 	}
-	a := ui.App.NewWindow(ui.tabs.Selected().Text + "(AccumulativeHistogram)")
+	a := ui.App.NewWindow(ui.tabs.Selected().Text + " || (AccumulativeHistogram)")
 	a.Resize(fyne.NewSize(500, 500))
-	a.Show()
 
 	image := ui.calculateHistogramGraph(convertToFloat(ui.tabsElements[ui.tabs.SelectedIndex()].HistogramAccumulative[:]), drawing.ColorBlack)
 	imageR := ui.calculateHistogramGraph(convertToFloat(ui.tabsElements[ui.tabs.SelectedIndex()].HistogramAccumulativeR[:]), drawing.ColorRed)
@@ -245,21 +253,22 @@ func (ui *UI) accumulativeHistogram() {
 	content := container.New(layout.NewAdaptiveGridLayout(2), image1, image2, image3, image4)
 
 	a.SetContent(content)
+	a.Show()
 }
 
 func (ui *UI) normalizedHistogram() {
-	if ui.tabs.SelectedIndex() == -1 {
+	currentImage, err := ui.getCurrentImage()
+	if err != nil {
 		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
 		return
 	}
-	a := ui.App.NewWindow(ui.tabs.Selected().Text + "(NormalizedHistogram)")
+	a := ui.App.NewWindow(ui.tabs.Selected().Text + " || (NormalizedHistogram)")
 	a.Resize(fyne.NewSize(500, 500))
-	a.Show()
 
-	image := ui.calculateHistogramGraph(ui.tabsElements[ui.tabs.SelectedIndex()].HistogramNormalized[:], drawing.ColorBlack)
-	imageR := ui.calculateHistogramGraph(ui.tabsElements[ui.tabs.SelectedIndex()].HistogramNormalizedR[:], drawing.ColorRed)
-	imageG := ui.calculateHistogramGraph(ui.tabsElements[ui.tabs.SelectedIndex()].HistogramNormalizedG[:], drawing.ColorGreen)
-	imageB := ui.calculateHistogramGraph(ui.tabsElements[ui.tabs.SelectedIndex()].HistogramNormalizedB[:], drawing.ColorBlue)
+	image := ui.calculateHistogramGraph(currentImage.HistogramNormalized[:], drawing.ColorBlack)
+	imageR := ui.calculateHistogramGraph(currentImage.HistogramNormalizedR[:], drawing.ColorRed)
+	imageG := ui.calculateHistogramGraph(currentImage.HistogramNormalizedG[:], drawing.ColorGreen)
+	imageB := ui.calculateHistogramGraph(currentImage.HistogramNormalizedB[:], drawing.ColorBlue)
 
 	image1 := canvas.NewImageFromImage(image)
 	image2 := canvas.NewImageFromImage(imageR)
@@ -269,6 +278,7 @@ func (ui *UI) normalizedHistogram() {
 	content := container.New(layout.NewAdaptiveGridLayout(2), image1, image2, image3, image4)
 
 	a.SetContent(content)
+	a.Show()
 }
 
 func (ui *UI) calculateHistogramGraph(valuesY []float64, color drawing.Color) image.Image {
@@ -303,6 +313,11 @@ func (ui *UI) calculateHistogramGraph(valuesY []float64, color drawing.Color) im
 }
 
 func (ui *UI) histogramEqual() {
+	currentImage, err := ui.getCurrentImage()
+	if err != nil {
+		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
+		return
+	}
 	dialog := dialog.NewFileOpen(func(reader fyne.URIReadCloser, err error) {
 		if err != nil {
 			dialog.ShowError(err, ui.MainWindow)
@@ -316,7 +331,7 @@ func (ui *UI) histogramEqual() {
 		if err != nil {
 			dialog.ShowError(err, ui.MainWindow)
 		}
-		ui.newImage(ui.tabsElements[ui.tabs.SelectedIndex()].HistogramIgualation(img))
+		ui.newImage(currentImage.HistogramIgualation(img))
 	}, ui.MainWindow)
 	dialog.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpeg", ".jpg", ".tfe"}))
 	dialog.Show()
@@ -324,6 +339,11 @@ func (ui *UI) histogramEqual() {
 }
 
 func (ui *UI) imgDifference() {
+	currentImage, err := ui.getCurrentImage()
+	if err != nil {
+		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
+		return
+	}
 	dialog := dialog.NewFileOpen(func(reader fyne.URIReadCloser, err error) {
 		if err != nil {
 			dialog.ShowError(err, ui.MainWindow)
@@ -337,13 +357,23 @@ func (ui *UI) imgDifference() {
 		if err != nil {
 			dialog.ShowError(err, ui.MainWindow)
 		}
-		ui.newImage(ui.tabsElements[ui.tabs.SelectedIndex()].ImageDiference(img))
+		img, err = currentImage.ImageDiference(img)
+		if err != nil {
+			dialog.ShowError(err, ui.MainWindow)
+		}
+		ui.newImage(img)
 	}, ui.MainWindow)
 	dialog.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpeg", ".jpg", ".tfe"}))
 	dialog.Show()
 }
 
+// TODO refactor this
 func (ui *UI) imgChangeMap() {
+	currentImage, err := ui.getCurrentImage()
+	if err != nil {
+		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
+		return
+	}
 	dialog := dialog.NewFileOpen(func(reader fyne.URIReadCloser, err error) {
 		if err != nil {
 			dialog.ShowError(err, ui.MainWindow)
@@ -357,11 +387,14 @@ func (ui *UI) imgChangeMap() {
 		if err != nil {
 			dialog.ShowError(err, ui.MainWindow)
 		}
-		ui.newImage(ui.tabsElements[ui.tabs.SelectedIndex()].ChangeMap(img))
+		img, err = currentImage.ChangeMap(img)
+		if err != nil {
+			dialog.ShowError(err, ui.MainWindow)
+		}
+		ui.newImage(img)
 	}, ui.MainWindow)
 	dialog.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpeg", ".jpg", ".tfe"}))
 	dialog.Show()
-
 }
 
 func convertToFloat(f32 []int) []float64 {
@@ -370,4 +403,31 @@ func convertToFloat(f32 []int) []float64 {
 		f64[i] = float64(f)
 	}
 	return f64
+}
+
+func createGraph(points []histogram.Point) (image.Image, error) {
+	Xs := make([]float64, len(points))
+	Ys := make([]float64, len(points))
+	for i, point := range points {
+		Xs[i] = float64(point.X_)
+		Ys[i] = float64(point.Y_)
+	}
+	graph := chart.Chart{
+		Series: []chart.Series{
+			chart.ContinuousSeries{
+				Style: chart.Style{
+					StrokeColor: drawing.ColorRed,
+				},
+				XValues: Xs,
+				YValues: Ys,
+			},
+		},
+	}
+	collector := &chart.ImageWriter{}
+	graph.Render(chart.PNG, collector)
+	image, err := collector.Image()
+	if err != nil {
+		return nil, err
+	}
+	return image, nil
 }

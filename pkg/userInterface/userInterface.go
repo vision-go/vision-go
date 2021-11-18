@@ -68,14 +68,12 @@ func (ui *UI) Init() {
 			fyne.NewMenuItem("Gamma Correction", ui.gammaCorrectionOp),
 			fyne.NewMenuItem("Difference", ui.imgDifference),
 			fyne.NewMenuItem("Change Map From..", ui.imgChangeMap),
+			fyne.NewMenuItem("Equalization", ui.equializationOp),
+			fyne.NewMenuItem("Histogram Igualation", ui.histogramEqual),
 		),
 		fyne.NewMenu("View",
 			fyne.NewMenuItem("Info", ui.infoView),
 			histograms,
-		),
-		fyne.NewMenu("No Linear Transformations",
-			fyne.NewMenuItem("Equalization", ui.equializationOp),
-			fyne.NewMenuItem("Histogram Igualation", ui.histogramEqual),
 		),
 	)
 
@@ -155,6 +153,7 @@ func (ui *UI) saveAsDialog() {
 				return originalName[:pointIndex+1] + format
 			}(ui.tabs.Selected().Text, selectionWidget.Selected)
 			dialog.SetFileName(formatedName)
+			dialog.SetFilter(storage.NewExtensionFileFilter([]string{"." + selectionWidget.Selected}))
 			dialog.Show()
 		},
 		ui.MainWindow)

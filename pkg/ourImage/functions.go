@@ -1,6 +1,7 @@
 package ourimage
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"math"
@@ -143,9 +144,9 @@ func (originalImg *OurImage) Equalization() *OurImage {
 	var lookUpTableArrayB [256]int
 
 	for i := 0; i < 256; i++ {
-		lookUpTableArrayR[i] = Max(0, int(math.Round((float64(originalImg.HistogramAccumulativeR.At(i)*256)/float64(size))-1)))
-		lookUpTableArrayG[i] = Max(0, int(math.Round((float64(originalImg.HistogramAccumulativeG.At(i)*256)/float64(size))-1)))
-		lookUpTableArrayB[i] = Max(0, int(math.Round((float64(originalImg.HistogramAccumulativeB.At(i)*256)/float64(size))-1)))
+		lookUpTableArrayR[i] = int(math.Round(math.Max(0, (float64(originalImg.HistogramAccumulativeR.At(i)*256)/float64(size))-1)))
+		lookUpTableArrayG[i] = int(math.Round(math.Max(0, (float64(originalImg.HistogramAccumulativeG.At(i)*256)/float64(size))-1)))
+		lookUpTableArrayB[i] = int(math.Round(math.Max(0, (float64(originalImg.HistogramAccumulativeB.At(i)*256)/float64(size))-1)))
 	}
 	for y := 0; y < originalImg.canvasImage.Image.Bounds().Dy(); y++ {
 		for x := 0; x < originalImg.canvasImage.Image.Bounds().Dx(); x++ {
@@ -168,11 +169,10 @@ func (originalImg *OurImage) Equalization() *OurImage {
 func (originalImg *OurImage) HistogramIgualation(imageIn *OurImage) *OurImage {
 	b := originalImg.canvasImage.Image.Bounds()
 	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
-	size := b.Dx() * b.Dy()
+	sizeF := float64(b.Dx() * b.Dy())
 	var lookUpTableArrayR [256]int
 	var lookUpTableArrayG [256]int
 	var lookUpTableArrayB [256]int
-	sizeF := float64(size)
 
 	M := 256
 	PoR := originalImg.HistogramAccumulativeR
@@ -212,8 +212,8 @@ func (originalImg *OurImage) HistogramIgualation(imageIn *OurImage) *OurImage {
 
 			newColor := color.RGBA{
 				R: uint8(lookUpTableArrayR[r]),
-				G: uint8(lookUpTableArrayR[g]),
-				B: uint8(lookUpTableArrayR[b]),
+				G: uint8(lookUpTableArrayG[g]),
+				B: uint8(lookUpTableArrayB[b]),
 				A: uint8(a),
 			}
 			NewImage.Set(x, y, newColor)
@@ -222,7 +222,10 @@ func (originalImg *OurImage) HistogramIgualation(imageIn *OurImage) *OurImage {
 	return originalImg.newFromImage(NewImage, "Histogram Igualated")
 }
 
-func (originalImg *OurImage) ImageDiference(imageIn *OurImage) *OurImage {
+func (originalImg *OurImage) ImageDiference(imageIn *OurImage) (*OurImage, error) {
+	if originalImg.canvasImage.Image.Bounds() != imageIn.canvasImage.Image.Bounds() {
+		return nil, fmt.Errorf("images must have the same dimensions")
+	}
 	b := originalImg.canvasImage.Image.Bounds()
 	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
 
@@ -245,13 +248,16 @@ func (originalImg *OurImage) ImageDiference(imageIn *OurImage) *OurImage {
 			NewImage.Set(x, y, newColor)
 		}
 	}
-	return originalImg.newFromImage(NewImage, "Image Difference")
+	return originalImg.newFromImage(NewImage, "Image Difference"), nil
 }
 
-func (originalImg *OurImage) ChangeMap(imageIn *OurImage) *OurImage {
+func (originalImg *OurImage) ChangeMap(imageIn *OurImage) (*OurImage, error) {
+	if originalImg.canvasImage.Image.Bounds() != imageIn.canvasImage.Image.Bounds() {
+		return nil, fmt.Errorf("images must have the same dimensions")
+	}
 	b := originalImg.canvasImage.Image.Bounds()
 	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
-	T := 20.0
+	T := 30.0
 
 	for y := 0; y < originalImg.canvasImage.Image.Bounds().Dy(); y++ {
 		for x := 0; x < originalImg.canvasImage.Image.Bounds().Dx(); x++ {
@@ -286,12 +292,5 @@ func (originalImg *OurImage) ChangeMap(imageIn *OurImage) *OurImage {
 			NewImage.Set(x, y, newColor)
 		}
 	}
-	return originalImg.newFromImage(NewImage, "Image Difference")
-}
-
-func Max(x, y int) int {
-	if x < y {
-		return y
-	}
-	return x
+	return originalImg.newFromImage(NewImage, "Image Difference"), nil
 }
