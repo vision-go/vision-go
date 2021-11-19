@@ -14,6 +14,7 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/storage"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
 	"github.com/dustin/go-humanize"
@@ -145,12 +146,9 @@ func (ui *UI) linearTransformationOp() {
 			var canvasPoints []fyne.CanvasObject
 			var points []*histogram.Point
 			pointsN, _ := strconv.Atoi(entryForNumberOfPoints.Text) // Error already checked in Validator
-			for i := 0; i < pointsN; i++ {
-				rawPoint, canvasPoint := histogram.NewPoint(i)
-				points = append(points, rawPoint)
-				canvasPoints = append(canvasPoints, canvasPoint)
-			}
-			showGraph := widget.NewButton("Graph", func() {
+			graph := canvas.NewImageFromResource(theme.ViewFullScreenIcon())
+			graph.SetMinSize(fyne.NewSize(250, 250))
+			updateGraph := func() {
 				validatedPoints := make([]histogram.Point, 0, len(points))
 				for _, point := range points {
 					if err := point.Validate(); err != nil {
@@ -158,20 +156,24 @@ func (ui *UI) linearTransformationOp() {
 					}
 					validatedPoints = append(validatedPoints, *point)
 				}
-				w := ui.App.NewWindow("Graph")
-				w.Resize(fyne.NewSize(500, 500))
 				sort.Slice(validatedPoints, func(i, j int) bool {
 					return validatedPoints[i].X_ < validatedPoints[j].X_
 				})
-				img, err := createGraph(validatedPoints)
+				newGraph, err := createGraph(validatedPoints)
 				if err != nil {
 					dialog.ShowError(err, ui.MainWindow)
 					return
 				}
-				w.SetContent(canvas.NewImageFromImage(img))
-				w.Show()
-			})
-			content := container.NewVBox(container.NewVBox(canvasPoints...), showGraph)
+				graph.Resource = nil
+				graph.Image = newGraph
+				graph.Refresh()
+			}
+			for i := 0; i < pointsN; i++ {
+				rawPoint, canvasPoint := histogram.NewPoint(i, updateGraph)
+				points = append(points, rawPoint)
+				canvasPoints = append(canvasPoints, canvasPoint)
+			}
+			content := container.NewHBox(container.NewVScroll(container.NewCenter(container.NewVBox(canvasPoints...))), graph)
 			dialog.ShowCustomConfirm("Linear Transformation", "OK", "Cancel", content,
 				func(choice bool) {
 					if !choice {
