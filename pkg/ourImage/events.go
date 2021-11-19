@@ -70,6 +70,7 @@ func (ourimage *OurImage) MouseDown(mouseEvent *desktop.MouseEvent) {
 
 func (ourimage *OurImage) MouseUp(mouseEvent *desktop.MouseEvent) {
 	ourimage.rectangle.Max = image.Pt(int(math.Round(float64(mouseEvent.Position.X))), int(math.Round(float64(mouseEvent.Position.Y))))
+	ourimage.rectangle = ourimage.rectangle.Canon()
 	if ourimage.rectangle.Dx() > 10 && ourimage.rectangle.Dy() > 10 {
 		ourimage.ROIcallback(ourimage.ROI(ourimage.rectangle))
 	}
