@@ -147,7 +147,7 @@ func (ui *UI) linearTransformationOp() {
 			var points []*histogram.Point
 			pointsN, _ := strconv.Atoi(entryForNumberOfPoints.Text) // Error already checked in Validator
 			graph := canvas.NewImageFromResource(theme.ViewFullScreenIcon())
-			graph.SetMinSize(fyne.NewSize(250, 250))
+			graph.SetMinSize(fyne.NewSize(500, 500))
 			updateGraph := func() {
 				validatedPoints := make([]histogram.Point, 0, len(points))
 				for _, point := range points {
