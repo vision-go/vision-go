@@ -10,30 +10,36 @@ import (
 )
 
 type Point struct {
-	X_ int
-	Y_ int
+	X int
+	Y int
 }
 
 func NewPoint(id int, onChanged func()) (*Point, fyne.CanvasObject) {
-	p := &Point{}
+	p := &Point{X: -1, Y: -1}
 	widgetForX := widget.NewEntry()
 	widgetForX.OnChanged = func(change string) {
-		changeInt, _ := strconv.Atoi(change) // TODO check error
-		p.X_ = changeInt
+		changeInt, err := strconv.Atoi(change)
+		if err != nil {
+			changeInt = -1
+		}
+		p.X = changeInt
 		onChanged()
 	}
 	widgetForY := widget.NewEntry()
 	widgetForY.OnChanged = func(change string) {
-		changeInt, _ := strconv.Atoi(change) // TODO check error
-		p.Y_ = changeInt
+		changeInt, err := strconv.Atoi(change)
+		if err != nil {
+			changeInt = -1
+		}
+		p.Y = changeInt
 		onChanged()
 	}
 	return p, container.NewAdaptiveGrid(3, widget.NewLabel("Point "+strconv.Itoa(id+1)+": "), widgetForX, widgetForY)
 }
 
 func (p Point) Validate() error {
-	if p.X_ < 0 || p.X_ > 255 || p.Y_ < 0 || p.Y_ > 255 {
-		return fmt.Errorf("the number must be in the range [0, 255]")
+	if p.X < 0 || p.X > 255 || p.Y < 0 || p.Y > 255 {
+		return fmt.Errorf("the values must be integers in the range [0, 255]")
 	}
 	return nil
 }

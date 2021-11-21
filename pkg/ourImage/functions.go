@@ -102,23 +102,26 @@ func (originalImg *OurImage) GammaCorrection(gamma float64) *OurImage {
 
 func (ourimage *OurImage) LinearTransformation(points []*histogram.Point) *OurImage {
 	sort.Slice(points, func(i, j int) bool {
-		return points[i].X_ < points[j].X_
+		if points[i].X == points[j].X {
+			return points[i].Y > points[j].Y
+		}
+		return points[i].X < points[j].X
 	})
-	if points[0].X_ != 0 {
-		points = append([]*histogram.Point{{X_: 0, Y_: 0}}, points...)
+	if points[0].X != 0 {
+		points = append([]*histogram.Point{{X: 0, Y: 0}}, points...)
 	}
-	if points[len(points)-1].X_ != 255 {
-		points = append(points, &histogram.Point{X_: 255, Y_: 255})
+	if points[len(points)-1].X != 255 {
+		points = append(points, &histogram.Point{X: 255, Y: 255})
 	}
 	var localLookUpTable [256]color.Gray
 	for i, j := 0, 1; j < len(points); i, j = i+1, j+1 {
 		p1, p2 := *points[i], *points[j]
-		if p2.X_ == p1.X_ {
-			p2.X_++
+		if p2.X == p1.X {
+			p2.X++
 		}
-		m := float64(p2.Y_-p1.Y_) / float64(p2.X_-p1.X_)
-		n := float64(p1.Y_) - m*float64(p1.X_)
-		for x := p1.X_; x < p2.X_; x++ {
+		m := float64(p2.Y-p1.Y) / float64(p2.X-p1.X)
+		n := float64(p1.Y) - m*float64(p1.X)
+		for x := p1.X; x < p2.X; x++ {
 			localLookUpTable[x] = color.Gray{uint8(math.Round(m*float64(x) + n))}
 		}
 	}

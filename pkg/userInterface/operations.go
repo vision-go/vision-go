@@ -157,8 +157,19 @@ func (ui *UI) linearTransformationOp() {
 					validatedPoints = append(validatedPoints, *point)
 				}
 				sort.Slice(validatedPoints, func(i, j int) bool {
-					return validatedPoints[i].X_ < validatedPoints[j].X_
+					return validatedPoints[i].X < validatedPoints[j].X
 				})
+				if len(validatedPoints) >= 1 {
+					if validatedPoints[0].X != 0 {
+						validatedPoints = append([]histogram.Point{{X: 0, Y: 0}}, validatedPoints...)
+					}
+					if validatedPoints[len(validatedPoints)-1].X != 255 {
+						validatedPoints = append(validatedPoints, histogram.Point{X: 255, Y: 255})
+					}
+				} else {
+					validatedPoints = append([]histogram.Point{{X: 0, Y: 0}}, validatedPoints...)
+					validatedPoints = append(validatedPoints, histogram.Point{X: 255, Y: 255})
+				}
 				newGraph, err := createGraph(validatedPoints)
 				if err != nil {
 					dialog.ShowError(err, ui.MainWindow)
@@ -411,8 +422,8 @@ func createGraph(points []histogram.Point) (image.Image, error) {
 	Xs := make([]float64, len(points))
 	Ys := make([]float64, len(points))
 	for i, point := range points {
-		Xs[i] = float64(point.X_)
-		Ys[i] = float64(point.Y_)
+		Xs[i] = float64(point.X)
+		Ys[i] = float64(point.Y)
 	}
 	graph := chart.Chart{
 		Series: []chart.Series{
@@ -425,6 +436,7 @@ func createGraph(points []histogram.Point) (image.Image, error) {
 			},
 		},
 	}
+	graph.YAxis.Range = &chart.ContinuousRange{Min: 0, Max: 255} // Fix flat graph not being displayed
 	collector := &chart.ImageWriter{}
 	graph.Render(chart.PNG, collector)
 	image, err := collector.Image()
