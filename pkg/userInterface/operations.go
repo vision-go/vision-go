@@ -225,7 +225,7 @@ func (ui *UI) infoView() {
 	message += "\nBrightness: " + fmt.Sprintf("%f", currentImage.Brightness())
 	message += "\nContrast: " + fmt.Sprintf("%f", currentImage.Contrast())
 	entropy, numberOfColors := currentImage.EntropyAndNumberOfColors()
-	message += "\nEntropy: " + strconv.Itoa(entropy) + " with " + strconv.Itoa(numberOfColors) + " diferent colors"
+	message += "\nEntropy: " + fmt.Sprintf("%f", entropy) + " with " + strconv.Itoa(numberOfColors) + " diferent colors"
 	dialog.ShowInformation("Information", message, ui.MainWindow)
 }
 

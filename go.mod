@@ -27,4 +27,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
 
-require github.com/disintegration/imaging v1.6.2 // indirect
+require github.com/disintegration/imaging v1.6.2

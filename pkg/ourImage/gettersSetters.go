@@ -1,8 +1,9 @@
 package ourimage
 
 import (
-	"fyne.io/fyne/v2/canvas"
 	"image"
+
+	"fyne.io/fyne/v2/canvas"
 )
 
 func (img *OurImage) Name() string {
@@ -25,7 +26,7 @@ func (img *OurImage) Contrast() float64 {
 	return img.contrast
 }
 
-func (img *OurImage) EntropyAndNumberOfColors() (int, int) {
+func (img *OurImage) EntropyAndNumberOfColors() (float64, int) {
 	return img.entropy, img.numberOfColors
 }
 

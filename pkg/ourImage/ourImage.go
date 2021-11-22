@@ -23,7 +23,7 @@ type OurImage struct {
 	format             string
 	brightness         float64
 	contrast           float64
-	entropy            int
+	entropy            float64
 	numberOfColors     int
 	minColor, maxColor int
 	size               int
@@ -195,7 +195,7 @@ func (ourimage *OurImage) calculateMinAndMaxColor() (min, max int) {
 	return
 }
 
-func (ourimage *OurImage) calculateEntropyAndNumberOfColors() (int, int) {
+func (ourimage *OurImage) calculateEntropyAndNumberOfColors() (float64, int) {
 	var sum float64
 	var numberOfColors int
 	for _, count := range ourimage.Histogram {
@@ -209,5 +209,5 @@ func (ourimage *OurImage) calculateEntropyAndNumberOfColors() (int, int) {
 			sum += probability * math.Log2(probability)
 		}
 	}
-	return int(math.Ceil(sum * -1)), numberOfColors
+	return sum * -1, numberOfColors
 }
