@@ -53,11 +53,13 @@ func (originalImg *OurImage) ROI(rect image.Rectangle) *OurImage {
 }
 
 func (originalImg *OurImage) BrightnessAndContrast(brightness, contrast float64) *OurImage {
-	b := originalImg.canvasImage.Image.Bounds()
-	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
+	NewImage := BrightnessAndContrastPreview(originalImg.canvasImage.Image, originalImg.brightness, originalImg.contrast, brightness, contrast)
+	return originalImg.newFromImage(NewImage, "B/C")
+}
 
-	A := contrast / originalImg.contrast
-	B := brightness - A*originalImg.brightness
+func BrightnessAndContrastPreview(img image.Image, oldbr, oldctr, newbr, newctr float64) image.Image {
+	A := newctr / oldctr
+	B := newbr - A*oldbr
 	localLookUpTable := make([]color.Gray, 256)
 	for colour := range localLookUpTable {
 		vOut := A*float64(colour) + B
@@ -69,15 +71,17 @@ func (originalImg *OurImage) BrightnessAndContrast(brightness, contrast float64)
 			localLookUpTable[colour] = color.Gray{uint8(vOut)}
 		}
 	}
-	for x := 0; x < originalImg.canvasImage.Image.Bounds().Dx(); x++ {
-		for y := 0; y < originalImg.canvasImage.Image.Bounds().Dy(); y++ {
-			r, g, b, a := originalImg.canvasImage.Image.At(x, y).RGBA()
+	b := img.Bounds()
+	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
+	for x := 0; x < img.Bounds().Dx(); x++ {
+		for y := 0; y < img.Bounds().Dy(); y++ {
+			r, g, b, a := img.At(x, y).RGBA()
 			r, g, b = r>>8, g>>8, b>>8
 			NewImage.Set(x, y, color.RGBA{R: localLookUpTable[r].Y,
 				G: localLookUpTable[g].Y, B: localLookUpTable[b].Y, A: uint8(a)})
 		}
 	}
-	return originalImg.newFromImage(NewImage, "B/C")
+	return NewImage
 }
 
 func (originalImg *OurImage) GammaCorrection(gamma float64) *OurImage {

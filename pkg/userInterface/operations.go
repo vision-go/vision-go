@@ -17,6 +17,7 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
+	"github.com/disintegration/imaging"
 	"github.com/dustin/go-humanize"
 	"github.com/vision-go/vision-go/pkg/histogram"
 	"github.com/wcharczuk/go-chart/v2"
@@ -57,6 +58,9 @@ func (ui *UI) adjustBrightnessAndContrastOp() {
 		dialog.ShowError(err, ui.MainWindow)
 		return
 	}
+	originalPreview := imaging.Resize(currentImage.CanvasImage().Image, 500, 0, imaging.NearestNeighbor)
+	previewImg := canvas.NewImageFromImage(originalPreview)
+	previewImg.SetMinSize(fyne.NewSize(500, 500)) // TODO dynamic size
 	brightnessValue, contrastValue := binding.NewFloat(), binding.NewFloat()
 	brightnessLabel, contrastLabel :=
 		widget.NewLabelWithData(binding.FloatToStringWithFormat(brightnessValue, "%v")),
@@ -68,11 +72,15 @@ func (ui *UI) adjustBrightnessAndContrastOp() {
 	contrastSlider.SetValue(currentImage.Contrast())
 	brightnessSlider.OnChanged = func(value float64) {
 		brightnessValue.Set(value)
+		previewImg.Image = ourimage.BrightnessAndContrastPreview(originalPreview, currentImage.Brightness(), currentImage.Contrast(), value, currentImage.Contrast())
+		previewImg.Refresh()
 	}
 	contrastSlider.OnChanged = func(value float64) {
 		contrastValue.Set(value)
+		previewImg.Image = ourimage.BrightnessAndContrastPreview(originalPreview, currentImage.Brightness(), currentImage.Contrast(), currentImage.Brightness(), value)
+		previewImg.Refresh()
 	}
-	content := container.NewGridWithRows(4, brightnessLabel, brightnessSlider, contrastLabel, contrastSlider)
+	content := container.NewGridWithColumns(2, container.NewGridWithRows(4, container.NewCenter(brightnessLabel), brightnessSlider, container.NewCenter(contrastLabel), contrastSlider), previewImg)
 	dialog.ShowCustomConfirm("Adjust Brightness and Contrast", "Ok", "Cancel", content,
 		func(choice bool) {
 			if !choice {

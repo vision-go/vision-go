@@ -8,6 +8,7 @@ import (
 func main() {
 	a := app.New()
 	w := a.NewWindow("vision-go")
+	w.SetOnClosed(a.Quit)
 	ui := userinterface.UI{App: a, MainWindow: w}
 
 	ui.Init()
