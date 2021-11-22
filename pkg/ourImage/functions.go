@@ -258,45 +258,28 @@ func (originalImg *OurImage) ImageDiference(imageIn *OurImage) (*OurImage, error
 	return originalImg.newFromImage(NewImage, "Image Difference"), nil
 }
 
-func (originalImg *OurImage) ChangeMap(imageIn *OurImage) (*OurImage, error) {
+func (originalImg *OurImage) ChangeMap(imageIn *OurImage, colour color.Color, T int) (*OurImage, error) {
 	if originalImg.canvasImage.Image.Bounds() != imageIn.canvasImage.Image.Bounds() {
 		return nil, fmt.Errorf("images must have the same dimensions")
 	}
 	b := originalImg.canvasImage.Image.Bounds()
 	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
-	T := 30.0
-
 	for y := 0; y < originalImg.canvasImage.Image.Bounds().Dy(); y++ {
 		for x := 0; x < originalImg.canvasImage.Image.Bounds().Dx(); x++ {
 			oldColour := originalImg.canvasImage.Image.At(x, y)
-			r, g, b, a := oldColour.RGBA()
+			r, g, b, _ := oldColour.RGBA()
 			r, g, b = r>>8, g>>8, b>>8
 
-			newColour := imageIn.canvasImage.Image.At(x, y)
-			r2, g2, b2, _ := newColour.RGBA()
+			r2, g2, b2, _ := imageIn.canvasImage.Image.At(x, y).RGBA()
 			r2, g2, b2 = r2>>8, g2>>8, b2>>8
 			grey := 0.222*float64(r) + 0.707*float64(g) + 0.071*float64(b)
 			grey2 := 0.222*float64(r2) + 0.707*float64(g2) + 0.071*float64(b2)
 			difference := math.Abs(grey2 - grey)
 
-			var newColor color.RGBA
-			if difference > T {
-				newColor = color.RGBA{
-					R: 255,
-					G: 0,
-					B: 0,
-					A: uint8(a),
-				}
-			} else {
-				newColor = color.RGBA{
-					R: uint8(r),
-					G: uint8(g),
-					B: uint8(b),
-					A: uint8(a),
-				}
+			if difference > float64(T) {
+				oldColour = colour
 			}
-
-			NewImage.Set(x, y, newColor)
+			NewImage.Set(x, y, oldColour)
 		}
 	}
 	return originalImg.newFromImage(NewImage, "Image Difference"), nil

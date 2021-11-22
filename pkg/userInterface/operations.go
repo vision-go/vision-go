@@ -3,6 +3,7 @@ package userinterface
 import (
 	"fmt"
 	"image"
+	"image/color"
 	"log"
 	"sort"
 	"strconv"
@@ -388,34 +389,73 @@ func (ui *UI) imgDifference() {
 	dialog.Show()
 }
 
-// TODO refactor this
+// TODO refactor open file DRY
 func (ui *UI) imgChangeMap() {
 	currentImage, err := ui.getCurrentImage()
 	if err != nil {
-		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
+		dialog.ShowError(err, ui.MainWindow)
 		return
 	}
-	dialog := dialog.NewFileOpen(func(reader fyne.URIReadCloser, err error) {
+	entry := widget.NewEntry()
+	entry.Validator = func(value string) error {
+		if value == "" {
+			return fmt.Errorf("please give us a value")
+		}
+		valueInt, err := strconv.Atoi(value)
 		if err != nil {
-			dialog.ShowError(err, ui.MainWindow)
-			return
+			return err
 		}
-		if reader == nil {
-			return
+		if valueInt < 0 || valueInt > 255 {
+			return fmt.Errorf("the values must be integers in the range [0, 255]")
 		}
-		img, err := ourimage.NewFromPath(reader.URI().Path(), reader.URI().Name(),
-			ui.label, ui.MainWindow, ui.ROIcallback, ui.closeTabsCallback)
-		if err != nil {
-			dialog.ShowError(err, ui.MainWindow)
-		}
-		img, err = currentImage.ChangeMap(img)
-		if err != nil {
-			dialog.ShowError(err, ui.MainWindow)
-		}
-		ui.newImage(img)
-	}, ui.MainWindow)
-	dialog.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpeg", ".jpg", ".tfe"}))
-	dialog.Show()
+		return nil
+	}
+	var colorPicked color.Color = color.RGBA{R: 255, G: 0, B: 0, A: 255}
+	colorPreview := canvas.NewRectangle(color.RGBA{R: 255, G: 0, B: 0, A: 255})
+	colorSelectionButton := widget.NewButton("Pick Color", func() {
+		colorSelectionDialog := dialog.NewColorPicker("Select a color", "Prueba", func(c color.Color) {
+			colorPicked = c
+			colorPreview.FillColor = colorPicked
+			colorPreview.Refresh()
+		}, ui.MainWindow)
+		colorSelectionDialog.Advanced = true
+		colorSelectionDialog.Show()
+	})
+	content := container.NewGridWithRows(2, container.NewGridWithColumns(2, widget.NewLabel("T: "), entry), container.NewGridWithColumns(2, colorSelectionButton, colorPreview))
+	dialog.ShowCustomConfirm("Select T value: ", "Ok", "Cancel", content,
+		func(choice bool) {
+			if !choice {
+				return
+			}
+			if err := entry.Validate(); err != nil {
+				dialog.ShowError(err, ui.MainWindow)
+				return
+			}
+			tValue, _ := strconv.Atoi(entry.Text) // No need to check thanks to validator
+			dialog := dialog.NewFileOpen(func(reader fyne.URIReadCloser, err error) {
+				if err != nil {
+					dialog.ShowError(err, ui.MainWindow)
+					return
+				}
+				if reader == nil {
+					return
+				}
+				img, err := ourimage.NewFromPath(reader.URI().Path(), reader.URI().Name(),
+					ui.label, ui.MainWindow, ui.ROIcallback, ui.closeTabsCallback)
+				if err != nil {
+					dialog.ShowError(err, ui.MainWindow)
+				}
+				img, err = currentImage.ChangeMap(img, colorPicked, tValue)
+				if err != nil {
+					dialog.ShowError(err, ui.MainWindow)
+					return
+				}
+				ui.newImage(img)
+			}, ui.MainWindow)
+			dialog.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpeg", ".jpg", ".tfe"}))
+			dialog.Show()
+		},
+		ui.MainWindow)
 }
 
 func convertToFloat(f32 []int) []float64 {
