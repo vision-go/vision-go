@@ -175,8 +175,10 @@ func (originalImg *OurImage) Equalization() *OurImage {
 
 func (originalImg *OurImage) HistogramIgualation(imageIn *OurImage) *OurImage {
 	b := originalImg.canvasImage.Image.Bounds()
+	b2 := imageIn.canvasImage.Image.Bounds()
 	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
 	sizeF := float64(b.Dx() * b.Dy())
+	sizeF2 := float64(b2.Dx() * b2.Dy())
 	var lookUpTableArrayR [256]int
 	var lookUpTableArrayG [256]int
 	var lookUpTableArrayB [256]int
@@ -192,21 +194,21 @@ func (originalImg *OurImage) HistogramIgualation(imageIn *OurImage) *OurImage {
 	for a := range lookUpTableArrayR {
 		for j := M - 1; j >= 0; j-- {
 			lookUpTableArrayR[a] = j
-			if (float64(PoR[a]) / sizeF) > (float64(PrR[j]) / sizeF) {
+			if (float64(PoR[a]) / sizeF) > (float64(PrR[j]) / sizeF2) {
 				break
 			}
 		}
 
 		for j := M - 1; j >= 0; j-- {
 			lookUpTableArrayG[a] = j
-			if (float64(PoG[a]) / sizeF) > (float64(PrG[j]) / sizeF) {
+			if (float64(PoG[a]) / sizeF) > (float64(PrG[j]) / sizeF2) {
 				break
 			}
 		}
 
 		for j := M - 1; j >= 0; j-- {
 			lookUpTableArrayB[a] = j
-			if (float64(PoB[a]) / sizeF) > (float64(PrB[j]) / sizeF) {
+			if (float64(PoB[a]) / sizeF) > (float64(PrB[j]) / sizeF2) {
 				break
 			}
 		}
