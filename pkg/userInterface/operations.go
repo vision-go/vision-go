@@ -73,12 +73,16 @@ func (ui *UI) adjustBrightnessAndContrastOp() {
 	contrastSlider.SetValue(currentImage.Contrast())
 	brightnessSlider.OnChanged = func(value float64) {
 		brightnessValue.Set(value)
-		previewImg.Image = ourimage.BrightnessAndContrastPreview(originalPreview, currentImage.Brightness(), currentImage.Contrast(), value, currentImage.Contrast())
+    newBrightness, _ := brightnessValue.Get()
+    newContrast, _ := contrastValue.Get()
+		previewImg.Image = ourimage.BrightnessAndContrastPreview(originalPreview, currentImage.Brightness(), currentImage.Contrast(), newBrightness, newContrast)
 		previewImg.Refresh()
 	}
 	contrastSlider.OnChanged = func(value float64) {
 		contrastValue.Set(value)
-		previewImg.Image = ourimage.BrightnessAndContrastPreview(originalPreview, currentImage.Brightness(), currentImage.Contrast(), currentImage.Brightness(), value)
+    newBrightness, _ := brightnessValue.Get()
+    newContrast, _ := contrastValue.Get()
+		previewImg.Image = ourimage.BrightnessAndContrastPreview(originalPreview, currentImage.Brightness(), currentImage.Contrast(), newBrightness, newContrast)
 		previewImg.Refresh()
 	}
 	content := container.NewGridWithColumns(2, container.NewGridWithRows(4, container.NewCenter(brightnessLabel), brightnessSlider, container.NewCenter(contrastLabel), contrastSlider), previewImg)
@@ -355,7 +359,7 @@ func (ui *UI) histogramEqual() {
 		}
 		ui.newImage(currentImage.HistogramIgualation(img))
 	}, ui.MainWindow)
-	dialog.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpeg", ".jpg", ".tfe"}))
+	dialog.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpeg", ".jpg", ".tfe", ".tfi"}))
 	dialog.Show()
 
 }
@@ -385,7 +389,7 @@ func (ui *UI) imgDifference() {
 		}
 		ui.newImage(img)
 	}, ui.MainWindow)
-	dialog.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpeg", ".jpg", ".tfe"}))
+	dialog.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpeg", ".jpg", ".tfe", ".tif"}))
 	dialog.Show()
 }
 
@@ -452,7 +456,7 @@ func (ui *UI) imgChangeMap() {
 				}
 				ui.newImage(img)
 			}, ui.MainWindow)
-			dialog.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpeg", ".jpg", ".tfe"}))
+			dialog.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpeg", ".jpg", ".tfe", ".tfi"}))
 			dialog.Show()
 		},
 		ui.MainWindow)

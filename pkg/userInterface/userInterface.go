@@ -110,7 +110,7 @@ func (ui *UI) openDialog() {
 		ui.progessBar.Hide()
 		ui.progessBar.Stop()
 	}, ui.MainWindow)
-	dialog.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpeg", ".jpg", ".tfe"}))
+	dialog.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpeg", ".jpg", ".tfe", ".tif"}))
 	dialog.Show()
 }
 
@@ -119,7 +119,7 @@ func (ui *UI) saveAsDialog() {
 		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
 		return
 	}
-	selectionWidget := widget.NewRadioGroup([]string{"png", "jpg"}, func(string) {})
+	selectionWidget := widget.NewRadioGroup([]string{"png", "jpg", "tif"}, func(string) {})
 	selectionWidget.SetSelected("png")
 	dialog.ShowCustomConfirm("Select format", "Ok", "Cancel", selectionWidget,
 		func(choice bool) {
