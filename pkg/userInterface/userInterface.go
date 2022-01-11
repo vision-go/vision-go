@@ -54,6 +54,11 @@ func (ui *UI) Init() {
 		fyne.NewMenuItem("Accumulative Histogram", ui.accumulativeHistogram),
 		fyne.NewMenuItem("Normalized Histogram", ui.normalizedHistogram),
 	)
+	mirror := fyne.NewMenuItem("Mirror", nil)
+	mirror.ChildMenu = fyne.NewMenu("",
+		fyne.NewMenuItem("Horizontal", ui.horizontal),
+		fyne.NewMenuItem("Vertical", ui.vertical),
+	)
 	ui.menu = fyne.NewMainMenu(
 		fyne.NewMenu("File",
 			fyne.NewMenuItem("Open", ui.openDialog),
@@ -74,6 +79,9 @@ func (ui *UI) Init() {
 		fyne.NewMenu("View",
 			fyne.NewMenuItem("Info", ui.infoView),
 			histograms,
+		),
+		fyne.NewMenu("Transformation",
+			mirror,
 		),
 	)
 

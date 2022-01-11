@@ -286,3 +286,29 @@ func (originalImg *OurImage) ChangeMap(imageIn *OurImage, colour color.Color, T 
 	}
 	return originalImg.newFromImage(NewImage, "Image Difference"), nil
 }
+
+func (originalImg *OurImage) HorizontalMirror() *OurImage {
+	b := originalImg.canvasImage.Image.Bounds()
+	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
+
+	for y := 0; y < originalImg.canvasImage.Image.Bounds().Dy(); y++ {
+		for x := 0; x < originalImg.canvasImage.Image.Bounds().Dx(); x++ {
+			oldColour := originalImg.canvasImage.Image.At(originalImg.canvasImage.Image.Bounds().Dx()-1-x, y)
+			NewImage.Set(x, y, oldColour)
+		}
+	}
+	return originalImg.newFromImage(NewImage, "Horizontal-Mirror")
+}
+
+func (originalImg *OurImage) VerticalMirror() *OurImage {
+	b := originalImg.canvasImage.Image.Bounds()
+	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
+
+	for y := 0; y < originalImg.canvasImage.Image.Bounds().Dy(); y++ {
+		for x := 0; x < originalImg.canvasImage.Image.Bounds().Dx(); x++ {
+			oldColour := originalImg.canvasImage.Image.At(x, originalImg.canvasImage.Image.Bounds().Dy()-1-y)
+			NewImage.Set(x, y, oldColour)
+		}
+	}
+	return originalImg.newFromImage(NewImage, "Vertical-Mirror")
+}

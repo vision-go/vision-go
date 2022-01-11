@@ -73,15 +73,15 @@ func (ui *UI) adjustBrightnessAndContrastOp() {
 	contrastSlider.SetValue(currentImage.Contrast())
 	brightnessSlider.OnChanged = func(value float64) {
 		brightnessValue.Set(value)
-    newBrightness, _ := brightnessValue.Get()
-    newContrast, _ := contrastValue.Get()
+		newBrightness, _ := brightnessValue.Get()
+		newContrast, _ := contrastValue.Get()
 		previewImg.Image = ourimage.BrightnessAndContrastPreview(originalPreview, currentImage.Brightness(), currentImage.Contrast(), newBrightness, newContrast)
 		previewImg.Refresh()
 	}
 	contrastSlider.OnChanged = func(value float64) {
 		contrastValue.Set(value)
-    newBrightness, _ := brightnessValue.Get()
-    newContrast, _ := contrastValue.Get()
+		newBrightness, _ := brightnessValue.Get()
+		newContrast, _ := contrastValue.Get()
 		previewImg.Image = ourimage.BrightnessAndContrastPreview(originalPreview, currentImage.Brightness(), currentImage.Contrast(), newBrightness, newContrast)
 		previewImg.Refresh()
 	}
@@ -496,4 +496,22 @@ func createGraph(points []histogram.Point) (image.Image, error) {
 		return nil, err
 	}
 	return image, nil
+}
+
+func (ui *UI) horizontal() {
+	currentImage, err := ui.getCurrentImage()
+	if err != nil {
+		dialog.ShowError(err, ui.MainWindow)
+		return
+	}
+	ui.newImage(currentImage.HorizontalMirror())
+}
+
+func (ui *UI) vertical() {
+	currentImage, err := ui.getCurrentImage()
+	if err != nil {
+		dialog.ShowError(err, ui.MainWindow)
+		return
+	}
+	ui.newImage(currentImage.VerticalMirror())
 }
