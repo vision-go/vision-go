@@ -320,10 +320,23 @@ func (originalImg *OurImage) RotateRight() *OurImage {
 	for y := 0; y < originalImg.canvasImage.Image.Bounds().Dy(); y++ {
 		for x := 0; x < originalImg.canvasImage.Image.Bounds().Dx(); x++ {
 			oldColour := originalImg.canvasImage.Image.At(x, y)
-			NewImage.Set(x, y, oldColour)
+			NewImage.Set(originalImg.canvasImage.Image.Bounds().Dy()-1-y, x, oldColour)
 		}
 	}
-	return originalImg.newFromImage(NewImage, "Vertical-Mirror")
+	return originalImg.newFromImage(NewImage, "Rotate-Right")
+}
+
+func (originalImg *OurImage) RotateLeft() *OurImage {
+	b := originalImg.canvasImage.Image.Bounds()
+	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dy(), b.Dx()))
+
+	for y := 0; y < originalImg.canvasImage.Image.Bounds().Dy(); y++ {
+		for x := 0; x < originalImg.canvasImage.Image.Bounds().Dx(); x++ {
+			oldColour := originalImg.canvasImage.Image.At(x, y)
+			NewImage.Set(y,originalImg.canvasImage.Image.Bounds().Dx()-1-x, oldColour)
+		}
+	}
+	return originalImg.newFromImage(NewImage, "Rotate-Right")
 }
 
 func (originalImg *OurImage) Transpose() *OurImage {
@@ -333,8 +346,8 @@ func (originalImg *OurImage) Transpose() *OurImage {
 	for y := 0; y < originalImg.canvasImage.Image.Bounds().Dy(); y++ {
 		for x := 0; x < originalImg.canvasImage.Image.Bounds().Dx(); x++ {
 			oldColour := originalImg.canvasImage.Image.At(x, y)
-			NewImage.Set(x, y, oldColour)
+			NewImage.Set(y, x, oldColour)
 		}
 	}
-	return originalImg.newFromImage(NewImage, "Vertical-Mirror")
+	return originalImg.newFromImage(NewImage, "Transpose")
 }

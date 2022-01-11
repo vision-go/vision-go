@@ -524,3 +524,22 @@ func (ui *UI) rotateRight() {
 	}
 	ui.newImage(currentImage.RotateRight())
 }
+
+func (ui *UI) rotateLeft() {
+	currentImage, err := ui.getCurrentImage()
+	if err != nil {
+		dialog.ShowError(err, ui.MainWindow)
+		return
+	}
+	ui.newImage(currentImage.RotateLeft())
+}
+
+func (ui *UI) transpose() {
+	currentImage, err := ui.getCurrentImage()
+	if err != nil {
+		dialog.ShowError(err, ui.MainWindow)
+		return
+	}
+	ui.newImage(currentImage.Transpose())
+}
+

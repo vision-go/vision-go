@@ -62,7 +62,7 @@ func (ui *UI) Init() {
 	rotate := fyne.NewMenuItem("Rotate", nil)
 	rotate.ChildMenu = fyne.NewMenu("",
 		fyne.NewMenuItem("Right", ui.rotateRight),
-		fyne.NewMenuItem("Left", ui.vertical),
+		fyne.NewMenuItem("Left", ui.rotateLeft),
 	)
 	ui.menu = fyne.NewMainMenu(
 		fyne.NewMenu("File",
@@ -88,6 +88,7 @@ func (ui *UI) Init() {
 		fyne.NewMenu("Transformation",
 			mirror,
 			rotate,
+			fyne.NewMenuItem("Transpose", ui.transpose),
 		),
 	)
 
