@@ -515,3 +515,12 @@ func (ui *UI) vertical() {
 	}
 	ui.newImage(currentImage.VerticalMirror())
 }
+
+func (ui *UI) rotateRight() {
+	currentImage, err := ui.getCurrentImage()
+	if err != nil {
+		dialog.ShowError(err, ui.MainWindow)
+		return
+	}
+	ui.newImage(currentImage.RotateRight())
+}
