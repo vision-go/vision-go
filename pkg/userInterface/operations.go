@@ -543,3 +543,45 @@ func (ui *UI) transpose() {
 	ui.newImage(currentImage.Transpose())
 }
 
+func (ui *UI) rescaling() {
+	currentImage, err := ui.getCurrentImage()
+	if err != nil {
+		dialog.ShowError(err, ui.MainWindow)
+		return
+	}
+	entry := widget.NewEntry()
+	entry.Validator = func(value string) error {
+		valueFloat, err := strconv.ParseFloat(value, 64)
+		if err != nil {
+			return err
+		}
+		if valueFloat < 1 || valueFloat > 500 {
+			return fmt.Errorf("rescalingfactor must be between values 1 and 500")
+		}
+		return nil
+	}
+	var typeSelect bool;
+	radio := widget.NewRadioGroup([]string{"VMP", "Bilineal"}, func(value string) {
+		if value == "VMP"{
+			typeSelect = true 
+		} else {
+			typeSelect = false
+		}
+	})
+	form := []*widget.FormItem{
+		widget.NewFormItem("Scale(in %)", entry),
+		widget.NewFormItem("Type", radio),
+	}
+	dialog.ShowForm("Select Scale", "Ok", "Cancel", form,
+		func(choice bool) {
+			if !choice {
+				return
+			}
+			rescalingFactor, _ := strconv.ParseFloat(entry.Text, 64) // No need to check thanks to validator
+			ui.newImage(currentImage.Rescaling(rescalingFactor/100,typeSelect))
+		},
+		ui.MainWindow)
+
+
+
+}
