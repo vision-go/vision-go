@@ -560,10 +560,10 @@ func (ui *UI) rescaling() {
 		}
 		return nil
 	}
-	var typeSelect bool;
+	var typeSelect bool
 	radio := widget.NewRadioGroup([]string{"VMP", "Bilineal"}, func(value string) {
-		if value == "VMP"{
-			typeSelect = true 
+		if value == "VMP" {
+			typeSelect = true
 		} else {
 			typeSelect = false
 		}
@@ -578,10 +578,8 @@ func (ui *UI) rescaling() {
 				return
 			}
 			rescalingFactor, _ := strconv.ParseFloat(entry.Text, 64) // No need to check thanks to validator
-			ui.newImage(currentImage.Rescaling(rescalingFactor/100,typeSelect))
+			ui.newImage(currentImage.Rescaling(rescalingFactor/100, typeSelect))
 		},
 		ui.MainWindow)
-
-
 
 }

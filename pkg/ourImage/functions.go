@@ -333,7 +333,7 @@ func (originalImg *OurImage) RotateLeft() *OurImage {
 	for y := 0; y < originalImg.canvasImage.Image.Bounds().Dy(); y++ {
 		for x := 0; x < originalImg.canvasImage.Image.Bounds().Dx(); x++ {
 			oldColour := originalImg.canvasImage.Image.At(x, y)
-			NewImage.Set(y,originalImg.canvasImage.Image.Bounds().Dx()-1-x, oldColour)
+			NewImage.Set(y, originalImg.canvasImage.Image.Bounds().Dx()-1-x, oldColour)
 		}
 	}
 	return originalImg.newFromImage(NewImage, "Rotate-Right")
@@ -358,49 +358,49 @@ func (originalImg *OurImage) Rescaling(rescalingFactor float64, VMP bool) *OurIm
 	height := int(math.Round(float64(b.Dy()) * (rescalingFactor)))
 	NewImage := image.NewRGBA(image.Rect(0, 0, width, height))
 
-	var Colour color.Color;
+	var Colour color.Color
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
 			cordX := float64(x) / (rescalingFactor)
 			cordY := float64(y) / (rescalingFactor)
-			if VMP{
+			if VMP {
 				indexI := int(math.Round(cordX))
 				indexJ := int(math.Round(cordY))
 				Colour = originalImg.canvasImage.Image.At(indexI, indexJ)
-			}else{
+			} else {
 				indexICeil := int(math.Ceil(cordX))
 				indexIFloor := int(math.Floor(cordX))
 				indexJCeil := int(math.Ceil(cordY))
 				indexJFloor := int(math.Floor(cordY))
-				
+
 				p := cordX - math.Floor(cordX)
 				q := cordY - math.Floor(cordY)
 				A := originalImg.canvasImage.Image.At(indexIFloor, indexJCeil)
-				B := originalImg.canvasImage.Image.At(indexICeil, indexJCeil)
+				D := originalImg.canvasImage.Image.At(indexICeil, indexJCeil)
 				C := originalImg.canvasImage.Image.At(indexIFloor, indexJFloor)
-				D:= originalImg.canvasImage.Image.At(indexICeil, indexJFloor)
+				B := originalImg.canvasImage.Image.At(indexICeil, indexJFloor)
 
-				ra,ga,ba,aa := A.RGBA()
-				rb,gb,bb,ab := B.RGBA()
-				rc,gc,bc,ac := C.RGBA()
-				rd,gd,bd,ad := D.RGBA()
-				ra,rb,rc,rd = ra >> 8, rb >> 8, rc >> 8, rd >> 8
-			  ga,gb,gc,gd = ga >> 8, gb >> 8, gc >> 8, gd >> 8
-				ba,bb,bc,bd = ba >> 8, bb >> 8, bc >> 8, bd >> 8
-				aa,ab,ac,ad = aa >> 8, ab >> 8, ac >> 8, ad >> 8
-				
-				rG := rc+uint32(float64(rd-rc)*p)+uint32(float64(ra-rc)*q)+uint32(float64(rb+rc-ra-rd)*p*q)
-				gG := gc+uint32(float64(gd-gc)*p)+uint32(float64(ga-gc)*q)+uint32(float64(gb+gc-ga-gd)*p*q)
-				bG := bc+uint32(float64(bd-bc)*p)+uint32(float64(ba-bc)*q)+uint32(float64(bb+bc-ba-bd)*p*q)
-				aG := ac+uint32(float64(ad-ac)*p)+uint32(float64(aa-ac)*q)+uint32(float64(ab+ac-aa-ad)*p*q)
-				Colour = color.RGBA{ 
+				ra, ga, ba, aa := A.RGBA()
+				rb, gb, bb, ab := B.RGBA()
+				rc, gc, bc, ac := C.RGBA()
+				rd, gd, bd, ad := D.RGBA()
+				ra, rb, rc, rd = ra>>8, rb>>8, rc>>8, rd>>8
+				ga, gb, gc, gd = ga>>8, gb>>8, gc>>8, gd>>8
+				ba, bb, bc, bd = ba>>8, bb>>8, bc>>8, bd>>8
+				aa, ab, ac, ad = aa>>8, ab>>8, ac>>8, ad>>8
+
+				rG := rc + uint32(float64(rd-rc)*p) + uint32(float64(ra-rc)*q) + uint32(float64(rb+rc-ra-rd)*p*q)
+				gG := gc + uint32(float64(gd-gc)*p) + uint32(float64(ga-gc)*q) + uint32(float64(gb+gc-ga-gd)*p*q)
+				bG := bc + uint32(float64(bd-bc)*p) + uint32(float64(ba-bc)*q) + uint32(float64(bb+bc-ba-bd)*p*q)
+				aG := ac + uint32(float64(ad-ac)*p) + uint32(float64(aa-ac)*q) + uint32(float64(ab+ac-aa-ad)*p*q)
+				Colour = color.RGBA{
 					R: uint8(rG),
 					G: uint8(gG),
 					B: uint8(bG),
 					A: uint8(aG),
 				}
 			}
-			NewImage.Set(x,y,Colour)	
+			NewImage.Set(x, y, Colour)
 		}
 	}
 	return originalImg.newFromImage(NewImage, "Rescaling")
