@@ -28,11 +28,12 @@ import (
 )
 
 func (ui *UI) equializationOp() {
-	if ui.tabs.SelectedIndex() == -1 {
+  img, err := ui.getCurrentImage()
+  if err != nil {
 		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
 		return
-	}
-	ui.newImage(ui.tabsElements[ui.tabs.SelectedIndex()].Equalization()) // TODO Improve name
+  }
+	ui.newImage(img.Equalization()) // TODO Improve name
 }
 
 func (ui *UI) negativeOp() {
@@ -449,7 +450,7 @@ func (ui *UI) imgChangeMap() {
 				if err != nil {
 					dialog.ShowError(err, ui.MainWindow)
 				}
-				img, err = currentImage.ChangeMap(img, colorPicked, tValue)
+				img, err = currentImage.ChangeMap(img, colorPicked, tValue) // TODO changemap doesn't need a full ourImage
 				if err != nil {
 					dialog.ShowError(err, ui.MainWindow)
 					return

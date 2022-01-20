@@ -198,7 +198,7 @@ func (ui *UI) closeTabsCallback(closeChoice int) {
 		return
 	}
 	switch closeChoice {
-	case ourimage.RightTabs: // TODO check for error
+	case ourimage.RightTabs:
 		for i := len(ui.tabsElements) - 1; i > currentImageIndex; i-- {
 			if err := ui.removeImage(i); err != nil {
 				dialog.ShowError(err, ui.MainWindow)

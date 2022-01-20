@@ -9,7 +9,6 @@ const (
 	Negative = iota
 )
 
-// TODO lazyload
 var negativeTable [256]color.Gray
 
 func init() {
