@@ -581,5 +581,26 @@ func (ui *UI) rescaling() {
 			ui.newImage(currentImage.Rescaling(rescalingFactor/100, typeSelect))
 		},
 		ui.MainWindow)
+}
+
+func (ui *UI) rotateAndPrint() {
+	currentImage, err := ui.getCurrentImage()
+	if err != nil {
+		dialog.ShowError(err, ui.MainWindow)
+		return
+	}
+	entry := widget.NewEntry()
+	form := []*widget.FormItem{
+		widget.NewFormItem("Scale(in %)", entry),
+	}
+	dialog.ShowForm("Select Scale", "Ok", "Cancel", form,
+		func(choice bool) {
+			if !choice {
+				return
+			}
+			angle, _ := strconv.ParseFloat(entry.Text, 64) // No need to check thanks to validator
+			ui.newImage(currentImage.RotateAndPrint(angle))
+		},
+		ui.MainWindow)
 
 }

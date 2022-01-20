@@ -2,7 +2,6 @@ package ourimage
 
 import (
 	"fmt"
-	"golang.org/x/image/tiff"
 	"image"
 	"image/jpeg"
 	"image/png"
@@ -10,12 +9,15 @@ import (
 	"os"
 	"strings"
 
+	"golang.org/x/image/tiff"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/widget"
 
 	histogram "github.com/vision-go/vision-go/pkg/histogram"
 )
+
 
 type OurImage struct {
 	widget.BaseWidget

@@ -359,22 +359,23 @@ func (originalImg *OurImage) Rescaling(rescalingFactor float64, VMP bool) *OurIm
 	NewImage := image.NewRGBA(image.Rect(0, 0, width, height))
 
 	var Colour color.Color
-	for y := 0; y < height; y++ {
-		for x := 0; x < width; x++ {
+	for y := 0; y <= height; y++ {
+		for x := 0; x <= width; x++ {
 			cordX := float64(x) / (rescalingFactor)
 			cordY := float64(y) / (rescalingFactor)
 			if VMP {
 				indexI := int(math.Round(cordX))
 				indexJ := int(math.Round(cordY))
-				Colour = originalImg.canvasImage.Image.At(indexI, indexJ)
+				
+				Colour = originalImg.canvasImage.Image.At(indexI,indexJ)
 			} else {
 				indexICeil := int(math.Ceil(cordX))
 				indexIFloor := int(math.Floor(cordX))
 				indexJCeil := int(math.Ceil(cordY))
 				indexJFloor := int(math.Floor(cordY))
 
-				p := cordX - math.Floor(cordX)
-				q := cordY - math.Floor(cordY)
+				p := uint32(cordX - math.Floor(cordX))
+				q := uint32(cordY - math.Floor(cordY))
 				A := originalImg.canvasImage.Image.At(indexIFloor, indexJCeil)
 				D := originalImg.canvasImage.Image.At(indexICeil, indexJCeil)
 				C := originalImg.canvasImage.Image.At(indexIFloor, indexJFloor)
@@ -389,10 +390,10 @@ func (originalImg *OurImage) Rescaling(rescalingFactor float64, VMP bool) *OurIm
 				ba, bb, bc, bd = ba>>8, bb>>8, bc>>8, bd>>8
 				aa, ab, ac, ad = aa>>8, ab>>8, ac>>8, ad>>8
 
-				rG := rc + uint32(float64(rd-rc)*p) + uint32(float64(ra-rc)*q) + uint32(float64(rb+rc-ra-rd)*p*q)
-				gG := gc + uint32(float64(gd-gc)*p) + uint32(float64(ga-gc)*q) + uint32(float64(gb+gc-ga-gd)*p*q)
-				bG := bc + uint32(float64(bd-bc)*p) + uint32(float64(ba-bc)*q) + uint32(float64(bb+bc-ba-bd)*p*q)
-				aG := ac + uint32(float64(ad-ac)*p) + uint32(float64(aa-ac)*q) + uint32(float64(ab+ac-aa-ad)*p*q)
+				rG := rc + uint32((rd-rc)*p) + uint32((ra-rc)*q) + uint32((rb+rc-ra-rd)*p*q)
+				gG := gc + uint32((gd-gc)*p) + uint32((ga-gc)*q) + uint32((gb+gc-ga-gd)*p*q)
+				bG := bc + uint32((bd-bc)*p) + uint32((ba-bc)*q) + uint32((bb+bc-ba-bd)*p*q)
+				aG := ac + uint32((ad-ac)*p) + uint32((aa-ac)*q) + uint32((ab+ac-aa-ad)*p*q)
 				Colour = color.RGBA{
 					R: uint8(rG),
 					G: uint8(gG),
@@ -404,4 +405,41 @@ func (originalImg *OurImage) Rescaling(rescalingFactor float64, VMP bool) *OurIm
 		}
 	}
 	return originalImg.newFromImage(NewImage, "Rescaling")
+}
+
+
+func (originalImg *OurImage) RotateAndPrint(angle float64) *OurImage{
+	b := originalImg.canvasImage.Image.Bounds()
+	angleRadian := -angle * math.Pi / 180 
+	newX := func(x int, y int) int{
+		return int(float64(x)*math.Cos(angleRadian)-float64(y)*math.Sin(angleRadian))
+	}
+	newY := func(x int, y int) int{
+		return int(float64(x)*math.Sin(angleRadian)+float64(y)*math.Cos(angleRadian))
+	}
+	A := image.Point{X: newX(0,0), Y: newY(0,0),}
+	B := image.Point{X: newX(b.Dx(),0), Y: newY(b.Dx(),0)}
+	C := image.Point{X: newX(0,b.Dy()), Y: newY(0,b.Dy())}
+	D := image.Point{X: newX(b.Dx(),b.Dy()), Y: newY(b.Dx(),b.Dy())}
+	minX := int(math.Min(math.Min(float64(A.X),float64(B.X)),math.Min(float64(C.X),float64(D.X))))
+	minY := int(math.Min(math.Min(float64(A.Y),float64(B.Y)),math.Min(float64(C.Y),float64(D.Y))))
+	maxX := int(math.Max(math.Max(float64(A.X),float64(B.X)),math.Max(float64(C.X),float64(D.X))))
+	maxY := int(math.Max(math.Max(float64(A.Y),float64(B.Y)),math.Max(float64(C.Y),float64(D.Y))))
+
+	NewImage := image.NewRGBA(image.Rect(minX, minY, maxX, maxY))
+//	for y := 0; y <= NewImage.Rect.Dy(); y++ {
+//		for x := 0; x <= NewImage.Rect.Dx(); x++ {
+//			NewImage.Set(newX(x,y)+minX,newY(x,y)+minY,color.RGBA64{A:255})
+//		}
+//	}
+	fmt.Println(A,B,C,D)
+	fmt.Println(minX,minY)
+	fmt.Println(maxX,maxY)
+	for y := 0; y <= b.Dy(); y++ {
+		for x := 0; x <= b.Dx(); x++ {
+			NewImage.Set(newX(x,y)+minX,newY(x,y)+minY,originalImg.canvasImage.Image.At(x,y))
+		}
+	}
+
+	return originalImg.newFromImage(NewImage,"Rotate and print")
 }

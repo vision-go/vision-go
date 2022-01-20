@@ -63,11 +63,11 @@ func (ui *UI) Init() {
 	rotate.ChildMenu = fyne.NewMenu("",
 		fyne.NewMenuItem("Right", ui.rotateRight),
 		fyne.NewMenuItem("Left", ui.rotateLeft),
+		fyne.NewMenuItem("Rotate and print", ui.rotateAndPrint),
 	)
 	rescaling := fyne.NewMenuItem("Rescaling", nil)
 	rescaling.ChildMenu = fyne.NewMenu("",
 		fyne.NewMenuItem("Geometric", ui.rescaling),
-		fyne.NewMenuItem("Rotating", ui.rotateLeft),
 	)
 	ui.menu = fyne.NewMainMenu(
 		fyne.NewMenu("File",
