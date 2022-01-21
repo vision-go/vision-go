@@ -18,7 +18,6 @@ import (
 	histogram "github.com/vision-go/vision-go/pkg/histogram"
 )
 
-
 type OurImage struct {
 	widget.BaseWidget
 	name               string

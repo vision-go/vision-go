@@ -366,8 +366,8 @@ func (originalImg *OurImage) Rescaling(rescalingFactor float64, VMP bool) *OurIm
 			if VMP {
 				indexI := int(math.Round(cordX))
 				indexJ := int(math.Round(cordY))
-				
-				Colour = originalImg.canvasImage.Image.At(indexI,indexJ)
+
+				Colour = originalImg.canvasImage.Image.At(indexI, indexJ)
 			} else {
 				indexICeil := int(math.Ceil(cordX))
 				indexIFloor := int(math.Floor(cordX))
@@ -407,39 +407,33 @@ func (originalImg *OurImage) Rescaling(rescalingFactor float64, VMP bool) *OurIm
 	return originalImg.newFromImage(NewImage, "Rescaling")
 }
 
+type Point struct {
+	X, Y float64
+}
 
-func (originalImg *OurImage) RotateAndPrint(angle float64) *OurImage{
+func (originalImg *OurImage) RotateAndPrint(angle float64) *OurImage {
 	b := originalImg.canvasImage.Image.Bounds()
-	angleRadian := -angle * math.Pi / 180 
-	newX := func(x int, y int) int{
-		return int(float64(x)*math.Cos(angleRadian)-float64(y)*math.Sin(angleRadian))
+	angleRadian := -angle * math.Pi / 180
+	rotateX := func(x, y int) float64 {
+		return float64(x)*math.Cos(angleRadian) - float64(y)*math.Sin(angleRadian)
 	}
-	newY := func(x int, y int) int{
-		return int(float64(x)*math.Sin(angleRadian)+float64(y)*math.Cos(angleRadian))
+	rotateY := func(x, y int) float64 {
+		return float64(x)*math.Sin(angleRadian) + float64(y)*math.Cos(angleRadian)
 	}
-	A := image.Point{X: newX(0,0), Y: newY(0,0),}
-	B := image.Point{X: newX(b.Dx(),0), Y: newY(b.Dx(),0)}
-	C := image.Point{X: newX(0,b.Dy()), Y: newY(0,b.Dy())}
-	D := image.Point{X: newX(b.Dx(),b.Dy()), Y: newY(b.Dx(),b.Dy())}
-	minX := int(math.Min(math.Min(float64(A.X),float64(B.X)),math.Min(float64(C.X),float64(D.X))))
-	minY := int(math.Min(math.Min(float64(A.Y),float64(B.Y)),math.Min(float64(C.Y),float64(D.Y))))
-	maxX := int(math.Max(math.Max(float64(A.X),float64(B.X)),math.Max(float64(C.X),float64(D.X))))
-	maxY := int(math.Max(math.Max(float64(A.Y),float64(B.Y)),math.Max(float64(C.Y),float64(D.Y))))
+	A := Point{X: rotateX(0, 0), Y: rotateY(0, 0)}
+	B := Point{X: rotateX(b.Dx(), 0), Y: rotateY(b.Dx(), 0)}
+	C := Point{X: rotateX(0, b.Dy()), Y: rotateY(0, b.Dy())}
+	D := Point{X: rotateX(b.Dx(), b.Dy()), Y: rotateY(b.Dx(), b.Dy())}
+	minX := math.Min(math.Min(A.X, B.X), math.Min(C.X, D.X))
+	maxX := math.Max(math.Max(A.X, B.X), math.Max(C.X, D.X))
+	minY := math.Min(math.Min(A.Y, B.Y), math.Min(C.Y, D.Y))
+	maxY := math.Max(math.Max(A.Y, B.Y), math.Max(C.Y, D.Y))
 
-	NewImage := image.NewRGBA(image.Rect(minX, minY, maxX, maxY))
-//	for y := 0; y <= NewImage.Rect.Dy(); y++ {
-//		for x := 0; x <= NewImage.Rect.Dx(); x++ {
-//			NewImage.Set(newX(x,y)+minX,newY(x,y)+minY,color.RGBA64{A:255})
-//		}
-//	}
-	fmt.Println(A,B,C,D)
-	fmt.Println(minX,minY)
-	fmt.Println(maxX,maxY)
-	for y := 0; y <= b.Dy(); y++ {
-		for x := 0; x <= b.Dx(); x++ {
-			NewImage.Set(newX(x,y)+minX,newY(x,y)+minY,originalImg.canvasImage.Image.At(x,y))
+	newImage := image.NewRGBA(image.Rect(0, 0, int(math.Ceil(math.Abs(maxX-minX))), int(math.Ceil(math.Abs(maxY-minY)))))
+	for y := 0; y < b.Dy(); y++ {
+		for x := 0; x < b.Dx(); x++ {
+			newImage.Set(int(math.Round(rotateX(x, y)+math.Abs(minX))), int(math.Round(rotateY(x, y)+math.Abs(minY))), originalImg.canvasImage.Image.At(x, y))
 		}
 	}
-
-	return originalImg.newFromImage(NewImage,"Rotate and print")
+	return originalImg.newFromImage(newImage, "Rotate and print")
 }

@@ -591,16 +591,15 @@ func (ui *UI) rotateAndPrint() {
 	}
 	entry := widget.NewEntry()
 	form := []*widget.FormItem{
-		widget.NewFormItem("Scale(in %)", entry),
+		widget.NewFormItem("Angular grades", entry),
 	}
-	dialog.ShowForm("Select Scale", "Ok", "Cancel", form,
+	dialog.ShowForm("Select angular", "Ok", "Cancel", form,
 		func(choice bool) {
 			if !choice {
 				return
 			}
-			angle, _ := strconv.ParseFloat(entry.Text, 64) // No need to check thanks to validator
+			angle, _ := strconv.ParseFloat(entry.Text, 64)
 			ui.newImage(currentImage.RotateAndPrint(angle))
 		},
 		ui.MainWindow)
-
 }
