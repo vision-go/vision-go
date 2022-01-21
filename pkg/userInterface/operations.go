@@ -590,7 +590,7 @@ func (ui *UI) rotateAndPrint() {
 		return
 	}
 	entry := widget.NewEntry()
-	form := []*widget.FormItem {
+	form := []*widget.FormItem{
 		widget.NewFormItem("Angular grades", entry),
 	}
 	dialog.ShowForm("Select angular", "Ok", "Cancel", form,
@@ -611,9 +611,9 @@ func (ui *UI) rotate() {
 		return
 	}
 	entry := widget.NewEntry()
-  selection := widget.NewSelect([]string{"Bilineal", "NearestNeighbor"}, func(string){return})
-  selection.SetSelectedIndex(0)
-	form := []*widget.FormItem {
+	selection := widget.NewSelect([]string{"Bilineal", "NearestNeighbor"}, func(string) { return })
+	selection.SetSelectedIndex(0)
+	form := []*widget.FormItem{
 		widget.NewFormItem("Angular grades", entry),
 		widget.NewFormItem("Strategy", selection),
 	}
