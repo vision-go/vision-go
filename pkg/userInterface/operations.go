@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/color"
 	"log"
+	"math"
 	"sort"
 	"strconv"
 
@@ -18,7 +19,6 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
-	"github.com/disintegration/imaging"
 	"github.com/dustin/go-humanize"
 	"github.com/vision-go/vision-go/pkg/histogram"
 	"github.com/wcharczuk/go-chart/v2"
@@ -59,7 +59,8 @@ func (ui *UI) adjustBrightnessAndContrastOp() {
 		dialog.ShowError(err, ui.MainWindow)
 		return
 	}
-	originalPreview := imaging.Resize(currentImage.CanvasImage().Image, 500, 0, imaging.NearestNeighbor)
+	scale := 500 / math.Max(float64(currentImage.Dimensions().X), float64(currentImage.Dimensions().Y))
+	originalPreview := currentImage.Rescaling(scale, false).CanvasImage().Image
 	previewImg := canvas.NewImageFromImage(originalPreview)
 	previewImg.SetMinSize(fyne.NewSize(500, 500)) // TODO dynamic size
 	brightnessValue, contrastValue := binding.NewFloat(), binding.NewFloat()

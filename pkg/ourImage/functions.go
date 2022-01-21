@@ -473,7 +473,7 @@ func (originalImg *OurImage) rotateVMP(angle float64) *OurImage {
 			rotatedX := int(math.Round(rotateX(x-int(math.Abs(min.X)), y-int(math.Abs(min.Y)), angleRadian, -1)))
 			rotatedY := int(math.Round(rotateY(x-int(math.Abs(min.X)), y-int(math.Abs(min.Y)), angleRadian, -1)))
 			if rotatedX >= 0 && rotatedX < b.Dx() && rotatedY >= 0 && rotatedY < b.Dy() {
-				newImage.Set(x, y, originalImg.canvasImage.Image.At(int(rotatedX), int(rotatedY)))
+				newImage.Set(x, y, originalImg.canvasImage.Image.At(rotatedX, rotatedY))
 			}
 		}
 	}
