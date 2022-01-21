@@ -590,7 +590,7 @@ func (ui *UI) rotateAndPrint() {
 		return
 	}
 	entry := widget.NewEntry()
-	form := []*widget.FormItem{
+	form := []*widget.FormItem {
 		widget.NewFormItem("Angular grades", entry),
 	}
 	dialog.ShowForm("Select angular", "Ok", "Cancel", form,
@@ -600,6 +600,30 @@ func (ui *UI) rotateAndPrint() {
 			}
 			angle, _ := strconv.ParseFloat(entry.Text, 64)
 			ui.newImage(currentImage.RotateAndPrint(angle))
+		},
+		ui.MainWindow)
+}
+
+func (ui *UI) rotate() {
+	currentImage, err := ui.getCurrentImage()
+	if err != nil {
+		dialog.ShowError(err, ui.MainWindow)
+		return
+	}
+	entry := widget.NewEntry()
+  selection := widget.NewSelect([]string{"Bilineal", "NearestNeighbor"}, func(string){return})
+  selection.SetSelectedIndex(0)
+	form := []*widget.FormItem {
+		widget.NewFormItem("Angular grades", entry),
+		widget.NewFormItem("Strategy", selection),
+	}
+	dialog.ShowForm("Select angular", "Ok", "Cancel", form,
+		func(choice bool) {
+			if !choice {
+				return
+			}
+			angle, _ := strconv.ParseFloat(entry.Text, 64)
+			ui.newImage(currentImage.Rotate(angle, selection.SelectedIndex()))
 		},
 		ui.MainWindow)
 }
