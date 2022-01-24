@@ -569,6 +569,7 @@ func (ui *UI) rescaling() {
 			typeSelect = false
 		}
 	})
+	radio.SetSelected("VMP")
 	form := []*widget.FormItem{
 		widget.NewFormItem("Scale(in %)", entry),
 		widget.NewFormItem("Type", radio),
