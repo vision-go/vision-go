@@ -489,7 +489,7 @@ func createGraph(points []histogram.Point) (image.Image, error) {
 			},
 		},
 	}
-	graph.YAxis.Range = &chart.ContinuousRange{Min: 0, Max: 255} // Fix flat graph not being displayed
+	graph.YAxis.Range = &chart.ContinuousRange{Min: 0, Max: 255}
 	collector := &chart.ImageWriter{}
 	graph.Render(chart.PNG, collector)
 	image, err := collector.Image()
@@ -613,7 +613,7 @@ func (ui *UI) rotate() {
 		return
 	}
 	entry := widget.NewEntry()
-	selection := widget.NewSelect([]string{"Bilineal", "NearestNeighbor"}, func(string) { return })
+	selection := widget.NewSelect([]string{"VMP", "Bilineal"}, nil)
 	selection.SetSelectedIndex(0)
 	form := []*widget.FormItem{
 		widget.NewFormItem("Angular grades", entry),
