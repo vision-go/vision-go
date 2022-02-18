@@ -20,11 +20,9 @@ require (
 	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/wcharczuk/go-chart/v2 v2.1.0
 	github.com/yuin/goldmark v1.4.2 // indirect
-	golang.org/x/image v0.0.0-20211028202545-6944b10bf410 // indirect
+	golang.org/x/image v0.0.0-20211028202545-6944b10bf410
 	golang.org/x/net v0.0.0-20211020060615-d418f374d309 // indirect
 	golang.org/x/sys v0.0.0-20211023085530-d6a326fbbf70 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
-
-require github.com/disintegration/imaging v1.6.2

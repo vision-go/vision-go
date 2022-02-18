@@ -54,6 +54,22 @@ func (ui *UI) Init() {
 		fyne.NewMenuItem("Accumulative Histogram", ui.accumulativeHistogram),
 		fyne.NewMenuItem("Normalized Histogram", ui.normalizedHistogram),
 	)
+	mirror := fyne.NewMenuItem("Mirror", nil)
+	mirror.ChildMenu = fyne.NewMenu("",
+		fyne.NewMenuItem("Horizontal", ui.horizontal),
+		fyne.NewMenuItem("Vertical", ui.vertical),
+	)
+	rotate := fyne.NewMenuItem("Rotate", nil)
+	rotate.ChildMenu = fyne.NewMenu("",
+		fyne.NewMenuItem("Right", ui.rotateRight),
+		fyne.NewMenuItem("Left", ui.rotateLeft),
+		fyne.NewMenuItem("Rotate and print", ui.rotateAndPrint),
+		fyne.NewMenuItem("Rotate", ui.rotate),
+	)
+	rescaling := fyne.NewMenuItem("Rescaling", nil)
+	rescaling.ChildMenu = fyne.NewMenu("",
+		fyne.NewMenuItem("Geometric", ui.rescaling),
+	)
 	ui.menu = fyne.NewMainMenu(
 		fyne.NewMenu("File",
 			fyne.NewMenuItem("Open", ui.openDialog),
@@ -70,6 +86,12 @@ func (ui *UI) Init() {
 			fyne.NewMenuItem("Change Map From..", ui.imgChangeMap),
 			fyne.NewMenuItem("Equalization", ui.equializationOp),
 			fyne.NewMenuItem("Histogram Igualation", ui.histogramEqual),
+		),
+		fyne.NewMenu("Transformation",
+			mirror,
+			rotate,
+			fyne.NewMenuItem("Transpose", ui.transpose),
+			rescaling,
 		),
 		fyne.NewMenu("View",
 			fyne.NewMenuItem("Info", ui.infoView),

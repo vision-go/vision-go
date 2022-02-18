@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/color"
 	"log"
+	"math"
 	"sort"
 	"strconv"
 
@@ -18,7 +19,6 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
-	"github.com/disintegration/imaging"
 	"github.com/dustin/go-humanize"
 	"github.com/vision-go/vision-go/pkg/histogram"
 	"github.com/wcharczuk/go-chart/v2"
@@ -60,7 +60,8 @@ func (ui *UI) adjustBrightnessAndContrastOp() {
 		dialog.ShowError(err, ui.MainWindow)
 		return
 	}
-	originalPreview := imaging.Resize(currentImage.CanvasImage().Image, 500, 0, imaging.NearestNeighbor)
+	scale := 500 / math.Max(float64(currentImage.Dimensions().X), float64(currentImage.Dimensions().Y))
+	originalPreview := currentImage.Rescaling(scale, false).CanvasImage().Image
 	previewImg := canvas.NewImageFromImage(originalPreview)
 	previewImg.SetMinSize(fyne.NewSize(500, 500)) // TODO dynamic size
 	brightnessValue, contrastValue := binding.NewFloat(), binding.NewFloat()
@@ -74,15 +75,15 @@ func (ui *UI) adjustBrightnessAndContrastOp() {
 	contrastSlider.SetValue(currentImage.Contrast())
 	brightnessSlider.OnChanged = func(value float64) {
 		brightnessValue.Set(value)
-    newBrightness, _ := brightnessValue.Get()
-    newContrast, _ := contrastValue.Get()
+		newBrightness, _ := brightnessValue.Get()
+		newContrast, _ := contrastValue.Get()
 		previewImg.Image = ourimage.BrightnessAndContrastPreview(originalPreview, currentImage.Brightness(), currentImage.Contrast(), newBrightness, newContrast)
 		previewImg.Refresh()
 	}
 	contrastSlider.OnChanged = func(value float64) {
 		contrastValue.Set(value)
-    newBrightness, _ := brightnessValue.Get()
-    newContrast, _ := contrastValue.Get()
+		newBrightness, _ := brightnessValue.Get()
+		newContrast, _ := contrastValue.Get()
 		previewImg.Image = ourimage.BrightnessAndContrastPreview(originalPreview, currentImage.Brightness(), currentImage.Contrast(), newBrightness, newContrast)
 		previewImg.Refresh()
 	}
@@ -489,7 +490,7 @@ func createGraph(points []histogram.Point) (image.Image, error) {
 			},
 		},
 	}
-	graph.YAxis.Range = &chart.ContinuousRange{Min: 0, Max: 255} // Fix flat graph not being displayed
+	graph.YAxis.Range = &chart.ContinuousRange{Min: 0, Max: 255}
 	collector := &chart.ImageWriter{}
 	graph.Render(chart.PNG, collector)
 	image, err := collector.Image()
@@ -497,4 +498,135 @@ func createGraph(points []histogram.Point) (image.Image, error) {
 		return nil, err
 	}
 	return image, nil
+}
+
+func (ui *UI) horizontal() {
+	currentImage, err := ui.getCurrentImage()
+	if err != nil {
+		dialog.ShowError(err, ui.MainWindow)
+		return
+	}
+	ui.newImage(currentImage.HorizontalMirror())
+}
+
+func (ui *UI) vertical() {
+	currentImage, err := ui.getCurrentImage()
+	if err != nil {
+		dialog.ShowError(err, ui.MainWindow)
+		return
+	}
+	ui.newImage(currentImage.VerticalMirror())
+}
+
+func (ui *UI) rotateRight() {
+	currentImage, err := ui.getCurrentImage()
+	if err != nil {
+		dialog.ShowError(err, ui.MainWindow)
+		return
+	}
+	ui.newImage(currentImage.RotateRight())
+}
+
+func (ui *UI) rotateLeft() {
+	currentImage, err := ui.getCurrentImage()
+	if err != nil {
+		dialog.ShowError(err, ui.MainWindow)
+		return
+	}
+	ui.newImage(currentImage.RotateLeft())
+}
+
+func (ui *UI) transpose() {
+	currentImage, err := ui.getCurrentImage()
+	if err != nil {
+		dialog.ShowError(err, ui.MainWindow)
+		return
+	}
+	ui.newImage(currentImage.Transpose())
+}
+
+func (ui *UI) rescaling() {
+	currentImage, err := ui.getCurrentImage()
+	if err != nil {
+		dialog.ShowError(err, ui.MainWindow)
+		return
+	}
+	entry := widget.NewEntry()
+	entry.Validator = func(value string) error {
+		valueFloat, err := strconv.ParseFloat(value, 64)
+		if err != nil {
+			return err
+		}
+		if valueFloat < 1 || valueFloat > 500 {
+			return fmt.Errorf("rescalingfactor must be between values 1 and 500")
+		}
+		return nil
+	}
+	var typeSelect bool
+	radio := widget.NewRadioGroup([]string{"VMP", "Bilineal"}, func(value string) {
+		if value == "VMP" {
+			typeSelect = true
+		} else {
+			typeSelect = false
+		}
+	})
+	radio.SetSelected("VMP")
+	form := []*widget.FormItem{
+		widget.NewFormItem("Scale(in %)", entry),
+		widget.NewFormItem("Type", radio),
+	}
+	dialog.ShowForm("Select Scale", "Ok", "Cancel", form,
+		func(choice bool) {
+			if !choice {
+				return
+			}
+			rescalingFactor, _ := strconv.ParseFloat(entry.Text, 64) // No need to check thanks to validator
+			ui.newImage(currentImage.Rescaling(rescalingFactor/100, typeSelect))
+		},
+		ui.MainWindow)
+}
+
+func (ui *UI) rotateAndPrint() {
+	currentImage, err := ui.getCurrentImage()
+	if err != nil {
+		dialog.ShowError(err, ui.MainWindow)
+		return
+	}
+	entry := widget.NewEntry()
+	form := []*widget.FormItem{
+		widget.NewFormItem("Angular grades", entry),
+	}
+	dialog.ShowForm("Select angular", "Ok", "Cancel", form,
+		func(choice bool) {
+			if !choice {
+				return
+			}
+			angle, _ := strconv.ParseFloat(entry.Text, 64)
+			ui.newImage(currentImage.RotateAndPrint(angle))
+		},
+		ui.MainWindow)
+}
+
+func (ui *UI) rotate() {
+	currentImage, err := ui.getCurrentImage()
+	if err != nil {
+		dialog.ShowError(err, ui.MainWindow)
+		return
+	}
+	entry := widget.NewEntry()
+	selection := widget.NewSelect([]string{"VMP", "Bilineal"}, nil)
+	selection.SetSelectedIndex(0)
+	form := []*widget.FormItem{
+		widget.NewFormItem("Angular grades", entry),
+		widget.NewFormItem("Strategy", selection),
+	}
+	dialog.ShowForm("Select angular", "Ok", "Cancel", form,
+		func(choice bool) {
+			if !choice {
+				return
+			}
+			angle, _ := strconv.ParseFloat(entry.Text, 64)
+			ui.newImage(currentImage.Rotate(angle, selection.SelectedIndex()))
+		},
+		ui.MainWindow)
 }

@@ -286,3 +286,265 @@ func (originalImg *OurImage) ChangeMap(imageIn *OurImage, colour color.Color, T 
 	}
 	return originalImg.newFromImage(NewImage, "Image Difference"), nil
 }
+
+func (originalImg *OurImage) HorizontalMirror() *OurImage {
+	b := originalImg.canvasImage.Image.Bounds()
+	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
+
+	for y := 0; y < originalImg.canvasImage.Image.Bounds().Dy(); y++ {
+		for x := 0; x < originalImg.canvasImage.Image.Bounds().Dx(); x++ {
+			oldColour := originalImg.canvasImage.Image.At(originalImg.canvasImage.Image.Bounds().Dx()-1-x, y)
+			NewImage.Set(x, y, oldColour)
+		}
+	}
+	return originalImg.newFromImage(NewImage, "Horizontal-Mirror")
+}
+
+func (originalImg *OurImage) VerticalMirror() *OurImage {
+	b := originalImg.canvasImage.Image.Bounds()
+	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
+
+	for y := 0; y < originalImg.canvasImage.Image.Bounds().Dy(); y++ {
+		for x := 0; x < originalImg.canvasImage.Image.Bounds().Dx(); x++ {
+			oldColour := originalImg.canvasImage.Image.At(x, originalImg.canvasImage.Image.Bounds().Dy()-1-y)
+			NewImage.Set(x, y, oldColour)
+		}
+	}
+	return originalImg.newFromImage(NewImage, "Vertical-Mirror")
+}
+
+func (originalImg *OurImage) RotateRight() *OurImage {
+	b := originalImg.canvasImage.Image.Bounds()
+	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dy(), b.Dx()))
+
+	for y := 0; y < originalImg.canvasImage.Image.Bounds().Dy(); y++ {
+		for x := 0; x < originalImg.canvasImage.Image.Bounds().Dx(); x++ {
+			oldColour := originalImg.canvasImage.Image.At(x, y)
+			NewImage.Set(originalImg.canvasImage.Image.Bounds().Dy()-1-y, x, oldColour)
+		}
+	}
+	return originalImg.newFromImage(NewImage, "Rotate-Right")
+}
+
+func (originalImg *OurImage) RotateLeft() *OurImage {
+	b := originalImg.canvasImage.Image.Bounds()
+	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dy(), b.Dx()))
+
+	for y := 0; y < originalImg.canvasImage.Image.Bounds().Dy(); y++ {
+		for x := 0; x < originalImg.canvasImage.Image.Bounds().Dx(); x++ {
+			oldColour := originalImg.canvasImage.Image.At(x, y)
+			NewImage.Set(y, originalImg.canvasImage.Image.Bounds().Dx()-1-x, oldColour)
+		}
+	}
+	return originalImg.newFromImage(NewImage, "Rotate-Right")
+}
+
+func (originalImg *OurImage) Transpose() *OurImage {
+	b := originalImg.canvasImage.Image.Bounds()
+	NewImage := image.NewRGBA(image.Rect(0, 0, b.Dy(), b.Dx()))
+
+	for y := 0; y < originalImg.canvasImage.Image.Bounds().Dy(); y++ {
+		for x := 0; x < originalImg.canvasImage.Image.Bounds().Dx(); x++ {
+			oldColour := originalImg.canvasImage.Image.At(x, y)
+			NewImage.Set(y, x, oldColour)
+		}
+	}
+	return originalImg.newFromImage(NewImage, "Transpose")
+}
+
+func (originalImg *OurImage) Rescaling(rescalingFactor float64, VMP bool) *OurImage {
+	if VMP {
+		return originalImg.rescalingVMP(rescalingFactor)
+	}
+	return originalImg.rescalingBilineal(rescalingFactor)
+}
+
+func (originalImg *OurImage) rescalingVMP(rescalingFactor float64) *OurImage {
+	b := originalImg.canvasImage.Image.Bounds()
+	width := int(math.Round(float64(b.Dx()) * (rescalingFactor)))
+	height := int(math.Round(float64(b.Dy()) * (rescalingFactor)))
+	NewImage := image.NewRGBA(image.Rect(0, 0, width, height))
+
+	var Colour color.Color
+	for y := 0; y <= height; y++ {
+		for x := 0; x <= width; x++ {
+			cordX := float64(x) / (rescalingFactor)
+			cordY := float64(y) / (rescalingFactor)
+			indexI := int(math.Round(cordX))
+			indexJ := int(math.Round(cordY))
+			Colour = originalImg.canvasImage.Image.At(indexI, indexJ)
+			NewImage.Set(x, y, Colour)
+		}
+	}
+	return originalImg.newFromImage(NewImage, "Rescaling-VMP")
+}
+
+func (originalImg *OurImage) rescalingBilineal(rescalingFactor float64) *OurImage {
+	b := originalImg.canvasImage.Image.Bounds()
+	width := int(math.Round(float64(b.Dx()) * (rescalingFactor)))
+	height := int(math.Round(float64(b.Dy()) * (rescalingFactor)))
+	NewImage := image.NewRGBA(image.Rect(0, 0, width, height))
+
+	for y := 0; y <= height; y++ {
+		for x := 0; x <= width; x++ {
+			cordX := float64(x) / (rescalingFactor)
+			cordY := float64(y) / (rescalingFactor)
+			indexICeil := int(math.Ceil(cordX))
+			indexIFloor := int(math.Floor(cordX))
+			indexJCeil := int(math.Ceil(cordY))
+			indexJFloor := int(math.Floor(cordY))
+
+			p := cordX - math.Floor(cordX)
+			q := cordY - math.Floor(cordY)
+			A := originalImg.canvasImage.Image.At(indexIFloor, indexJCeil)
+			D := originalImg.canvasImage.Image.At(indexICeil, indexJCeil)
+			C := originalImg.canvasImage.Image.At(indexIFloor, indexJFloor)
+			B := originalImg.canvasImage.Image.At(indexICeil, indexJFloor)
+
+			ra, ga, ba, aa := A.RGBA()
+			rb, gb, bb, ab := B.RGBA()
+			rc, gc, bc, ac := C.RGBA()
+			rd, gd, bd, ad := D.RGBA()
+			raF, rbF, rcF, rdF := float64(ra>>8), float64(rb>>8), float64(rc>>8), float64(rd>>8)
+			gaF, gbF, gcF, gdF := float64(ga>>8), float64(gb>>8), float64(gc>>8), float64(gd>>8)
+			baF, bbF, bcF, bdF := float64(ba>>8), float64(bb>>8), float64(bc>>8), float64(bd>>8)
+			aaF, abF, acF, adF := float64(aa>>8), float64(ab>>8), float64(ac>>8), float64(ad>>8)
+
+			rG := rcF + (rdF-rcF)*p + (raF-rcF)*q + (rbF+rcF-raF-rdF)*p*q
+			gG := gcF + (gdF-gcF)*p + (gaF-gcF)*q + (gbF+gcF-gaF-gdF)*p*q
+			bG := bcF + (bdF-bcF)*p + (baF-bcF)*q + (bbF+bcF-baF-bdF)*p*q
+			aG := acF + (adF-acF)*p + (aaF-acF)*q + (abF+acF-aaF-adF)*p*q
+			Colour := color.RGBA{
+				R: uint8(rG),
+				G: uint8(gG),
+				B: uint8(bG),
+				A: uint8(aG),
+			}
+			NewImage.Set(x, y, Colour)
+		}
+	}
+	return originalImg.newFromImage(NewImage, "Rescaling-Bilineal")
+}
+
+type point struct {
+	X, Y float64
+}
+
+func rotateX(x, y int, angleRadian, factor float64) float64 {
+	return float64(x)*math.Cos(angleRadian*factor) - float64(y)*math.Sin(angleRadian*factor)
+}
+
+func rotateY(x, y int, angleRadian, factor float64) float64 {
+	return float64(x)*math.Sin(angleRadian*factor) + float64(y)*math.Cos(angleRadian*factor)
+}
+
+func (originalImg *OurImage) RotateAndPrint(angle float64) *OurImage {
+	b := originalImg.canvasImage.Image.Bounds()
+	angleRadian := -angle * math.Pi / 180
+	A := point{X: rotateX(0, 0, angleRadian, 1), Y: rotateY(0, 0, angleRadian, 1)}
+	B := point{X: rotateX(b.Dx(), 0, angleRadian, 1), Y: rotateY(b.Dx(), 0, angleRadian, 1)}
+	C := point{X: rotateX(0, b.Dy(), angleRadian, 1), Y: rotateY(0, b.Dy(), angleRadian, 1)}
+	D := point{X: rotateX(b.Dx(), b.Dy(), angleRadian, 1), Y: rotateY(b.Dx(), b.Dy(), angleRadian, 1)}
+	minX := math.Min(math.Min(A.X, B.X), math.Min(C.X, D.X))
+	maxX := math.Max(math.Max(A.X, B.X), math.Max(C.X, D.X))
+	minY := math.Min(math.Min(A.Y, B.Y), math.Min(C.Y, D.Y))
+	maxY := math.Max(math.Max(A.Y, B.Y), math.Max(C.Y, D.Y))
+
+	newImage := image.NewRGBA(image.Rect(0, 0, int(math.Ceil(math.Abs(maxX-minX))), int(math.Ceil(math.Abs(maxY-minY)))))
+	for y := 0; y < b.Dy(); y++ {
+		for x := 0; x < b.Dx(); x++ {
+			newImage.Set(int(math.Round(rotateX(x, y, angleRadian, 1)+math.Abs(minX))),
+				int(math.Round(rotateY(x, y, angleRadian, 1)+math.Abs(minY))),
+				originalImg.canvasImage.Image.At(x, y))
+		}
+	}
+	return originalImg.newFromImage(newImage, "Rotate and print")
+}
+
+func (originalImg *OurImage) Rotate(angle float64, selection int) *OurImage {
+	if selection == 0 {
+		return originalImg.rotateVMP(angle)
+	}
+	return originalImg.rotateBilineal(angle)
+}
+
+func (originalImg *OurImage) getMinMaxPointsForRotation(angleRadian float64) (point, point) {
+	b := originalImg.canvasImage.Image.Bounds()
+	A := point{X: rotateX(0, 0, angleRadian, 1), Y: rotateY(0, 0, angleRadian, 1)}
+	B := point{X: rotateX(b.Dx(), 0, angleRadian, 1), Y: rotateY(b.Dx(), 0, angleRadian, 1)}
+	C := point{X: rotateX(0, b.Dy(), angleRadian, 1), Y: rotateY(0, b.Dy(), angleRadian, 1)}
+	D := point{X: rotateX(b.Dx(), b.Dy(), angleRadian, 1), Y: rotateY(b.Dx(), b.Dy(), angleRadian, 1)}
+	minX := math.Min(math.Min(A.X, B.X), math.Min(C.X, D.X))
+	maxX := math.Max(math.Max(A.X, B.X), math.Max(C.X, D.X))
+	minY := math.Min(math.Min(A.Y, B.Y), math.Min(C.Y, D.Y))
+	maxY := math.Max(math.Max(A.Y, B.Y), math.Max(C.Y, D.Y))
+	return point{minX, minY}, point{maxX, maxY}
+}
+
+func (originalImg *OurImage) rotateVMP(angle float64) *OurImage {
+	b := originalImg.canvasImage.Image.Bounds()
+	angleRadian := -angle * math.Pi / 180
+	min, max := originalImg.getMinMaxPointsForRotation(angleRadian)
+
+	newImage := image.NewRGBA(image.Rect(0, 0, int(math.Ceil(math.Abs(max.X-min.X))), int(math.Ceil(math.Abs(max.Y-min.Y)))))
+	for y := 0; y < newImage.Rect.Dy(); y++ {
+		for x := 0; x < newImage.Rect.Dx(); x++ {
+			rotatedX := int(math.Round(rotateX(x-int(math.Abs(min.X)), y-int(math.Abs(min.Y)), angleRadian, -1)))
+			rotatedY := int(math.Round(rotateY(x-int(math.Abs(min.X)), y-int(math.Abs(min.Y)), angleRadian, -1)))
+			if rotatedX >= 0 && rotatedX < b.Dx() && rotatedY >= 0 && rotatedY < b.Dy() {
+				newImage.Set(x, y, originalImg.canvasImage.Image.At(rotatedX, rotatedY))
+			}
+		}
+	}
+	return originalImg.newFromImage(newImage, "Rotate-VMP")
+}
+
+func (originalImg *OurImage) rotateBilineal(angle float64) *OurImage {
+	b := originalImg.canvasImage.Image.Bounds()
+	angleRadian := -angle * math.Pi / 180
+	min, max := originalImg.getMinMaxPointsForRotation(angleRadian)
+	newImage := image.NewRGBA(image.Rect(0, 0, int(math.Ceil(math.Abs(max.X-min.X))), int(math.Ceil(math.Abs(max.Y-min.Y)))))
+
+	for y := 0; y < newImage.Rect.Dy(); y++ {
+		for x := 0; x < newImage.Rect.Dx(); x++ {
+			rotatedX := rotateX(x-int(math.Abs(min.X)), y-int(math.Abs(min.Y)), angleRadian, -1)
+			rotatedY := rotateY(x-int(math.Abs(min.X)), y-int(math.Abs(min.Y)), angleRadian, -1)
+
+			indexICeil := int(math.Ceil(rotatedX))
+			indexIFloor := int(math.Floor(rotatedX))
+			indexJCeil := int(math.Ceil(rotatedY))
+			indexJFloor := int(math.Floor(rotatedY))
+
+			p := rotatedX - float64(indexIFloor)
+			q := rotatedY - float64(indexJFloor)
+			A := originalImg.canvasImage.Image.At(indexIFloor, indexJCeil)
+			B := originalImg.canvasImage.Image.At(indexICeil, indexJCeil)
+			C := originalImg.canvasImage.Image.At(indexIFloor, indexJFloor)
+			D := originalImg.canvasImage.Image.At(indexICeil, indexJFloor)
+
+			ra, ga, ba, aa := A.RGBA()
+			rb, gb, bb, ab := B.RGBA()
+			rc, gc, bc, ac := C.RGBA()
+			rd, gd, bd, ad := D.RGBA()
+			raF, rbF, rcF, rdF := float64(ra>>8), float64(rb>>8), float64(rc>>8), float64(rd>>8)
+			gaF, gbF, gcF, gdF := float64(ga>>8), float64(gb>>8), float64(gc>>8), float64(gd>>8)
+			baF, bbF, bcF, bdF := float64(ba>>8), float64(bb>>8), float64(bc>>8), float64(bd>>8)
+			aaF, abF, acF, adF := float64(aa>>8), float64(ab>>8), float64(ac>>8), float64(ad>>8)
+
+			rG := rcF + (rdF-rcF)*p + (raF-rcF)*q + (rbF+rcF-raF-rdF)*p*q
+			gG := gcF + (gdF-gcF)*p + (gaF-gcF)*q + (gbF+gcF-gaF-gdF)*p*q
+			bG := bcF + (bdF-bcF)*p + (baF-bcF)*q + (bbF+bcF-baF-bdF)*p*q
+			aG := acF + (adF-acF)*p + (aaF-acF)*q + (abF+acF-aaF-adF)*p*q
+			Colour := color.RGBA{
+				R: uint8(rG),
+				G: uint8(gG),
+				B: uint8(bG),
+				A: uint8(aG),
+			}
+			if rotatedX >= 0 && rotatedX < float64(b.Dx()) && rotatedY >= 0 && rotatedY < float64(b.Dy()) {
+				newImage.Set(x, y, Colour)
+			}
+		}
+	}
+	return originalImg.newFromImage(newImage, "Rotate-Bilineal")
+}

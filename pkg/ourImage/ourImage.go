@@ -5,10 +5,11 @@ import (
 	"image"
 	"image/jpeg"
 	"image/png"
-	"golang.org/x/image/tiff"
 	"math"
 	"os"
 	"strings"
+
+	"golang.org/x/image/tiff"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -71,7 +72,7 @@ func NewFromPath(path, name string, statusBar *widget.Label, w fyne.Window, ROIc
 	inputImg, format, err := image.Decode(f)
 	img.format = format
 	if err == image.ErrFormat {
-    fmt.Println("No debería")
+		fmt.Println("No debería")
 		img.format = "tfe(no format)"
 		pixels := make([]byte, 320*200) // TODO dynamic size?
 		f.Seek(0, 0)
@@ -165,8 +166,8 @@ func (img *OurImage) Save(file *os.File, format string) error {
 	} else if format == "jpeg" || format == "jpg" {
 		return jpeg.Encode(file, img.canvasImage.Image, nil)
 	} else if format == "tif" || format == "tiff" {
-    return tiff.Encode(file, img.canvasImage.Image, nil)
-  }
+		return tiff.Encode(file, img.canvasImage.Image, nil)
+	}
 	return fmt.Errorf("incorrrect format")
 }
 
