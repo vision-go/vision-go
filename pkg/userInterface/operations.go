@@ -28,11 +28,11 @@ import (
 )
 
 func (ui *UI) equializationOp() {
-  img, err := ui.getCurrentImage()
-  if err != nil {
+	img, err := ui.getCurrentImage()
+	if err != nil {
 		dialog.ShowError(fmt.Errorf("no image selected"), ui.MainWindow)
 		return
-  }
+	}
 	ui.newImage(img.Equalization()) // TODO Improve name
 }
 
